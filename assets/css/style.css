@@ -720,10 +720,43 @@ tfoot td {
 
 .sales-left {
     flex: 8;
+    padding: 15px;
+}
+
+.sales-left .item-container {
+    width: 100%;
+    height: 70%;
+    background-color: #1D1F20;
+    padding: 10px;
+}
+
+.sales-left .bottom {
+    height: 30%;
+    display: flex;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.sales-left .bottom .left {
+    flex: 1;
+    background-color: #1C1D1F;
+    margin-right: 10px;
+}
+
+.sales-left .bottom .right {
+    flex: 2;
+    background-color: #1C1D1F;
 }
 
 .sales-mid {
     flex: 4;
+}
+
+.sales-input {
+    width: 100%;
+    margin-left: 5px;
+    font-size: 18px;
+    background-color: transparent;
 }
 
 .sales-mid .cal {
@@ -751,8 +784,20 @@ tfoot td {
     color: white;
     font-size: 30px;
     background-color: transparent;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.sales-mid .cal tr td button :hover {
+    color: #186FCE;
 }
 
 .sales-right {
     flex: 1;
+    padding-left: 10px;
+}
+
+.sales-right .icon-container {
+    background-color: #1C1D1F;
+    height: 100%;
 }
