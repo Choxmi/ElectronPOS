@@ -9,6 +9,12 @@
     src: url('../fonts/Nunito-ExtraLight.ttf') format('truetype');
 }
 
+@font-face {
+    font-family: 'Material Icons';
+    src: local('Material Icons'),
+         local('MaterialIcons-Regular'),url('../icons/material_icon.woff2') format('woff2');
+}
+
 html, body {
     font-family: 'Nunito', sans-serif;
     font-size: 62.5%;
@@ -21,6 +27,31 @@ html, body {
         font-size: 50%;
     }
 }
+
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;  /* Preferred icon size */
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+  
+    /* Support for all WebKit browsers. */
+    -webkit-font-smoothing: antialiased;
+    /* Support for Safari and Chrome. */
+    text-rendering: optimizeLegibility;
+  
+    /* Support for Firefox. */
+    -moz-osx-font-smoothing: grayscale;
+  
+    /* Support for IE. */
+    font-feature-settings: 'liga';
+  }
 
 svg {
     display: inline-block;
@@ -728,6 +759,27 @@ tfoot td {
     height: 70%;
     background-color: #1D1F20;
     padding: 10px;
+    overflow: auto;
+}
+
+.sales-left .item-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sales-left .item-container table thead th {
+    background-color: #1D1F20;
+    padding: 5px;
+    text-align: center;
+    border-bottom: 1px solid #1D1F20;
+}
+
+.sales-left .item-container table tbody tr td {
+    background-color: #186FCE;
+    padding: 5px;
+    text-align: center;
+    border-bottom: 1px solid #1D1F20;
+    color: white;
 }
 
 .sales-left .bottom {
@@ -746,6 +798,55 @@ tfoot td {
 .sales-left .bottom .right {
     flex: 2;
     background-color: #1C1D1F;
+    padding-top: 10px;
+}
+
+.sales-left .bottom .right .halfline {
+    width: 100%;
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.sales-left .bottom .right .halfline .top-right {
+    flex: 1;
+    text-align: end;
+    margin-right: 20px;
+    font-weight: 900;
+    font-size: 12px;
+}
+
+.sales-left .bottom .right .halfline .top-left {
+    flex: 1;
+    text-align: start;
+    margin-left: 20px;
+    font-weight: 700;
+    font-size: 12px;
+    color: rgb(146, 146, 146);
+}
+
+.sales-left .bottom .right .fullline {
+    padding-top: 15px;
+    position: relative;
+    display: flex;
+}
+
+.sales-left .bottom .right .fullline .label {
+    position: absolute;
+    bottom: 0;
+    text-align: start;
+    margin-left: 20px;
+    font-size: 12px;
+    color: rgb(146, 146, 146);
+    flex: 1;
+}
+
+.sales-left .bottom .right .fullline .total {
+    text-align: end;
+    margin-right: 20px;
+    color: #186FCE;
+    font-size: 22px;
+    font-weight: 700;
+    flex: 1;
 }
 
 .sales-mid {
@@ -780,16 +881,26 @@ tfoot td {
     margin: 2px;
 }
 
+.sales-mid .cal tr td .return {
+    background-color: #186FCE;
+}
+
 .sales-mid .cal tr td button {
     color: white;
     font-size: 30px;
     background-color: transparent;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 30px;
+    width: 100%;
+    height: 100%;
 }
 
-.sales-mid .cal tr td button :hover {
-    color: #186FCE;
+.sales-mid .cal tr td :hover {
+    background-color: #186FCE;
+    cursor: pointer;
+}
+
+.sales-mid .cal tr td :active {
+    background-color: #4D4D4E;
 }
 
 .sales-right {
@@ -798,6 +909,44 @@ tfoot td {
 }
 
 .sales-right .icon-container {
-    background-color: #1C1D1F;
+    background-color: #202122;
     height: 100%;
 }
+
+.sales-right .icon-container .item {
+    width: 100%;
+    text-align: center;
+    display: inline-flex;
+    font-size: 11px;
+}
+
+.sales-right .icon-container .item .selected {
+    width: 90%;
+    background-color: #1C1D1F;
+    text-align: center;
+    display: grid;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.sales-right .icon-container .item .empty {
+    width: 90%;
+    text-align: center;
+    display: grid;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.sales-right .icon-container .item :hover{
+    background-color: #1C1D1F;
+    cursor: pointer;
+}
+
+.sales-right .icon-container .item .indicate {
+    width: 10%;
+    background-color: #186FCE;
+}
+
+::-webkit-scrollbar {
+    width: 1px;
+  }
