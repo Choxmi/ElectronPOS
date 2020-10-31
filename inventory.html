@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Inventory</title>
+</head>
+
+<body>
+<div class="full-alert" id="alert">
+    <div class="alert-content">
+        <div class="alert-close" onclick="toggleAlert(0)">X</div>
+        <div class="alert-body" id="alert-body">
+            
+        </div>
+    </div>
+</div>
+<div class="sales">
+    <div class="sales-header">
+        <div class="title">Inventory</div>
+        <!-- <div class="search">
+        </div> -->
+        <div class="end"></div>
+    </div>
+    <div class="sale-container">
+        <div class="sales-left">
+            <div class="item-container">
+                <div class="table-search">
+                    <input type="text" id="inventory_searchbox"/>
+                    <button onclick="fillTable('search')"><i class="material-icons">search</i></button>
+                    <div class="radio-container">
+                        <div class="radio-item">
+                            <input type="radio" id="radio_code" value="code" name="search_by" checked/>
+                            <label for="radio_code">By Item Code</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="radio_name" value="name" name="search_by"/>
+                            <label for="radio_name">By Name</label>
+                        </div>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <th>ITEM Code</th>
+                        <th>CATEGORY</th>
+                        <th>SUBCATEGORY</th>
+                        <th>MODEL</th>
+                        <th>UNIT PRICE</th>
+                    </thead>
+                    <tbody id="inventory_table">
+                    </tbody>
+                </table>
+            </div>
+            <div class="bottom">
+                <div class="left">
+                    <img id="canvas" class="qr-img"/>
+                    <div class="barcode" id="barcode"></div>
+                </div>
+                <div class="right">
+                    <div class="flex-wrapper">
+                        <div class="btn-container">
+                            <button>
+                                <i class="material-icons">print</i>
+                            </button>
+                            <h1>PRINT BARCODE</h1>
+                        </div>
+                        <div class="detail-container">
+                            <div class="detail-line">
+                                <h2>Last Updated</h2>
+                                <p id="last_updated"></p>
+                            </div>
+                            <div class="detail-line">
+                                <h2>Current Stock</h2>
+                                <p id="cur_stock"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="inventory-mid">
+            <!-- <div class="field">
+                <label>Item Code</label>
+                <input type="text" placeholder="Item Code" value="" id="item_code" />
+            </div> -->
+            <div class="field">
+                <label>Category</label>
+                <div class="drop_with_add">
+                    <select id="item_category">
+                    </select>
+                    <button onclick="toggleAlert(1)">+</button>
+                </div>
+            </div>
+            <div class="field">
+                <label>Sub Category</label>
+                <div class="drop_with_add">
+                    <select id="item_sub">
+                    </select>
+                    <button onclick="toggleAlert(2)">+</button>
+                </div>
+            </div>
+            <!-- <div class="field">
+                <label>Model</label>
+                <input type="text" placeholder="Model Name" value="" id="item_model" />
+            </div> -->
+            <div class="field">
+                <label>Item Name</label>
+                <input type="text" placeholder="Item Name" value="" id="item_name" />
+            </div>
+            <div class="field">
+                <label>Current Stock</label>
+                <input type="number" placeholder="Current Stock" value="0" id="item_stock" />
+            </div>
+
+            <div class="field">
+                <label>Unit Price</label>
+                <input type="number" placeholder="Current Stock" value="0" id="item_price" />
+            </div>
+            <div class="field">
+                <label>Image</label>
+                <div id="image_container" class="img-picker">Select Image</div>
+                <input type="hidden" id="img_path" />
+            </div>
+            <div class="actions">
+                <button class="btn" id="action-add">ADD</button>
+                <button class="btn" id="action-update">UPDATE</button>
+                <button class="btn" id="action-delete">DELETE</button>
+            </div>
+        </div>
+        <div class="sales-right">
+            <div class="icon-container">
+                <div class="item" onclick="navigate(0)">
+                    <div class="selected">
+                        <i class="material-icons">widgets</i>
+                        STOCK
+                    </div>
+                    <div class="indicate"></div>
+                </div>
+                <div class="item" onclick="navigate(1)">
+                    <div class="empty">
+                        <i class="material-icons">point_of_sale</i>
+                        SALES
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="empty">
+                        <i class="material-icons">construction</i>
+                        REPAIR
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="empty">
+                        <i class="material-icons">attach_money</i>
+                        EXPENSES
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    var mysql = require('mysql');
+    var moment = require('moment');
+    const QRCode = require('qrcode');
+    var barcode = require('barcode');
+
+    var remote = require('electron').remote;
+    var fs = remote.require('fs');
+
+    var cat_dropdown = [];
+    var sub_cat_dropdown = [];
+    var inventory_list = [];
+
+    function el(selector){
+        return document.getElementById(selector);
+    }
+
+    var canvas = document.getElementById('canvas');
+
+    el('image_container').addEventListener('click', function (){
+        remote.dialog.showOpenDialog(remote.getCurrentWindow(),
+        {
+            filters: [
+            {name: 'Images', extensions: ['png','jpg','jpeg']}
+            ]
+        }, 
+        function(filepaths, bookmarks) {
+            el('img_path').value = filepaths[0].toString();
+            var _img = fs.readFileSync(filepaths[0]).toString('base64');
+            var _out = '<img src="data:image/png;base64,' + _img + '" />';
+            var _target = document.getElementById('image_container');
+            _target.innerHTML = "";
+            _target.insertAdjacentHTML('beforeend', _out);
+
+            return;
+        });
+    });
+
+    el('action-add').addEventListener('click', function (){
+        addInventory();
+    });
+
+    el('item_category').addEventListener('change', function (item){
+        var sub = sub_cat_dropdown.filter((sub_cat)=>sub_cat.category_id === parseInt(item.target.value));
+        var subCategoryOptions = "";
+        for(var i = 0; i < sub.length; i++){
+            subCategoryOptions+='<option value='+sub[i].sub_id+'>'+sub[i].subcategory+'</option>';
+        }
+        el('item_sub').innerHTML =  subCategoryOptions;
+    });
+
+    el('action-delete').addEventListener('click', function (){
+        // Get the mysql service
+        getFirstTenRows(function (rows) {
+            var html = '';
+
+            rows.forEach(function (row) {
+                html += '<tr>';
+                html += '<td>';
+                html += row.id;
+                html += '</td>';
+                html += '<td>';
+                html += row.display_name;
+                html += '</td>';
+                html += '<td>';
+                html += row.city;
+                html += '</td>';
+                html += '</tr>';
+                console.log(row);
+            });
+
+            document.querySelector('#table > tbody').innerHTML = html;
+            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
+            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
+
+        });
+    }, false);
+
+    function getMaxModelID(cat,sub){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT MAX(model_id) as cur_id FROM pos_stock_models WHERE category_id = '+cat+' AND sub_id = '+sub;
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            return rows;
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    function addAsset(model_id){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        var barcode_char = "S";
+        (parseInt(el('item_category').value) > 9)?barcode_char+=el('item_category').value:barcode_char+=("0"+el('item_category').value);
+        (parseInt(el('item_sub').value) > 9)?barcode_char+=el('item_sub').value:barcode_char+=("0"+el('item_sub').value);
+        (model_id > 99)?barcode_char+=model_id:((model_id > 9)?barcode_char+=("0"+model_id):barcode_char+=("00"+model_id));
+
+        if(el('img_path').value === null){
+            $query = 'INSERT INTO pos_stock_models(barcode, category_id, sub_id, model_id, model_name, unit_price, stock_remaining, last_updated) VALUES ("'+barcode_char+'",' + el('item_category').value + ', ' + el('item_sub').value + ', '+ model_id +' , "' + el('item_name').value + '", ' + el('item_price').value + ', ' + el('item_stock').value + ', "' + moment().format('YYYY-MM-DD hh:mm:ss') + '");';
+        } else {
+            var splt_arr = (el('img_path').value).split('.');
+            var dest = 'item_img/'+barcode_char+'.'+splt_arr[(splt_arr.length - 1)];
+            var name_arr = (el('img_path').value).split('/');
+            fs.copyFile(el('img_path').value, dest, (err) => {
+                if (err) throw err;
+                console.log(el('img_path').value+' was copied to '+dest);
+            });
+            $query = 'INSERT INTO pos_stock_models(barcode, category_id, sub_id, model_id, model_name, unit_price, img, stock_remaining, last_updated) VALUES ("'+barcode_char+'",' + el('item_category').value + ', ' + el('item_sub').value + ', '+ model_id +' , "' + el('item_name').value + '", ' + el('item_price').value + ', "'+ dest +'", ' + el('item_stock').value + ', "' + moment().format('YYYY-MM-DD hh:mm:ss') + '");';
+        }
+        console.log("QUERY",$query);
+        
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error occurred performing the query.");
+                console.log(err);
+                return;
+            }
+            displayNotification('Done!', 'Asset Saved');
+            fillTable(null);
+        });
+    }
+
+    function addInventory(){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT MAX(model_id) as cur_id FROM pos_stock_models WHERE category_id = '+el('item_category').value+' AND sub_id = '+el('item_sub').value;
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            addAsset(rows[0].cur_id === null ? 1 : parseInt(rows[0].cur_id)+1);
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    function displayNotification(titleValue, notificationValue){
+        const notification = {
+            title: titleValue,
+            body: notificationValue
+        }
+
+        const myNotification = new window.Notification(notification.title, notification)
+    }
+
+    function getDropdowns(){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT * FROM pos_stock_categories';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            cat_dropdown = rows;
+            
+            var categoryOptions = "";
+            for(var i = 0; i < rows.length; i++){
+                categoryOptions+='<option value='+rows[i].category_id+'>'+rows[i].category_name+'</option>';
+            }
+            el('item_category').innerHTML =  categoryOptions;
+            getSubcategories();
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    function getSubcategories(){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT * FROM pos_stock_subcategories';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            sub_cat_dropdown = rows;
+            var sub = rows.filter((sub_cat)=>sub_cat.category_id === 1);
+            var subCategoryOptions = "";
+            for(var i = 0; i < sub.length; i++){
+                subCategoryOptions+='<option value='+sub[i].sub_id+'>'+sub[i].subcategory+'</option>';
+            }
+            el('item_sub').innerHTML =  subCategoryOptions;
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    getDropdowns();
+    
+    function fillTable(searchby){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        if(searchby === null){
+            $query = 'SELECT * FROM pos_stock_models m INNER JOIN pos_stock_categories c ON m.category_id = c.category_id INNER JOIN pos_stock_subcategories s ON (m.sub_id = s.sub_id AND m.category_id = s.category_id) LIMIT 10 ';
+        } else {
+            var by = document.querySelector('input[name="search_by"]:checked').value;
+            if(by === "code") {
+                $query = 'SELECT * FROM pos_stock_models m INNER JOIN pos_stock_categories c ON m.category_id = c.category_id INNER JOIN pos_stock_subcategories s ON (m.sub_id = s.sub_id AND m.category_id = s.category_id) WHERE barcode LIKE "%'+el('inventory_searchbox').value+'%" LIMIT 10 ';
+            } else if(by === "name") {
+                $query = 'SELECT * FROM pos_stock_models m INNER JOIN pos_stock_categories c ON m.category_id = c.category_id INNER JOIN pos_stock_subcategories s ON (m.sub_id = s.sub_id AND m.category_id = s.category_id) WHERE model_name LIKE "%'+el('inventory_searchbox').value+'%" LIMIT 10 ';
+            }
+        }
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            inventory_list = rows;
+            var invent_tbl = "";
+            for(var i = 0; i < inventory_list.length; i++){
+                invent_tbl+="<tr onclick='selectRow("+i+")'>";
+                invent_tbl+="<td>"+inventory_list[i].barcode+"</td>";
+                invent_tbl+="<td>"+inventory_list[i].category_name+"</td>";
+                invent_tbl+="<td>"+inventory_list[i].subcategory+"</td>";
+                invent_tbl+="<td>"+inventory_list[i].model_name+"</td>";
+                invent_tbl+="<td>"+inventory_list[i].unit_price+"</td>";
+                invent_tbl+="</tr>";
+            }
+            el('inventory_table').innerHTML =  invent_tbl;
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    fillTable(null);
+
+    function selectRow(row){
+        el('barcode').innerHTML = inventory_list[row].barcode;
+        // var opts = {
+        //     errorCorrectionLevel: 'H',
+        //     type: 'image/jpeg',
+        //     quality: 0.3,
+        //     margin: 1,
+        //     color: {
+        //         dark:"#000000FF",
+        //         light:"#FFFFFFFF"
+        //     }
+        // }
+        
+        el('item_category').value = inventory_list[row].category_id;
+        var event = new Event('change');
+        el('item_category').dispatchEvent(event);
+        el('item_sub').value = inventory_list[row].sub_id;
+        el('item_name').value = inventory_list[row].model_name;
+        el('item_stock').value = inventory_list[row].stock_remaining;
+        el('item_price').value = parseFloat(inventory_list[row].unit_price);
+        el('last_updated').innerHTML = inventory_list[row].last_updated;
+        el('cur_stock').innerHTML = inventory_list[row].stock_remaining;
+
+        if(inventory_list[row].img !== null){
+            var _img = fs.readFileSync(inventory_list[row].img).toString('base64');
+            var _out = '<img src="data:image/png;base64,' + _img + '" />';
+            var _target = document.getElementById('image_container');
+            _target.innerHTML = "";
+            _target.insertAdjacentHTML('beforeend', _out);
+        } else {
+            var _target = document.getElementById('image_container');
+            _target.innerHTML = "Select Image";
+        }
+
+        var code39 = barcode('code39', {
+            data: inventory_list[row].barcode,
+            width: 350,
+            height: 100,
+        });
+
+        code39.getBase64(function (err, imgsrc) {
+            if (err) throw err;
+            console.log("Img Source",imgsrc);
+            
+            var img = document.getElementById('canvas');
+            img.src = imgsrc;
+        });
+    }
+
+    function toggleAlert(action){
+        if(action === 0){
+            el('alert').style.display = "none";
+        } else {
+            var alert_content = "";
+            if(action === 1){
+                alert_content = `<h1>ADD CATEGORY</h1>
+                <label>Category</label>
+                <input type="text" placeholder="Category Name" id="modal_cat_name" />
+                <button class="alert-submit" onclick="addCategory()">SUBMIT</button>`;
+            } else if(action === 2){
+                alert_content = `<h1>ADD SUB CATEGORY</h1>
+                <label>Category</label>
+                <input type="hidden" value="`+el('item_category').options[el('item_category').selectedIndex].value+`" />
+                <input type="text" value="`+el('item_category').options[el('item_category').selectedIndex].innerHTML+`" disabled />
+                <label>Sub Category</label>
+                <input type="text" placeholder="Subcategory" id="modal_sub_cat_name" />
+                <button class="alert-submit" onclick="triggerAddSubCategory(`+el('item_category').options[el('item_category').selectedIndex].value+`)">SUBMIT</button>`;
+            }   
+            el('alert-body').innerHTML = alert_content;                               
+            el('alert').style.display = "block"
+        }                                              
+    }
+
+    function addCategory(category){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'INSERT INTO pos_stock_categories(category_name) VALUES ("' + el('modal_cat_name').value + '");';
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error occurred performing the query.");
+                console.log(err);
+                return;
+            }
+            displayNotification('Done!', 'Category added');
+            getDropdowns();
+            toggleAlert(0);
+        });
+    }
+
+    function triggerAddSubCategory(catId){
+        getMaxSubID(catId,1)
+    }
+
+    function getMaxSubID(catId,action){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT MAX(sub_id) as sub_id FROM pos_stock_subcategories WHERE category_id = '+catId;
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            console.log("MAX ROW",rows);
+            if(action === 1){
+                addSubcategory(catId,(rows[0].sub_id === null)?1:parseInt(rows[0].sub_id)+1);
+            }
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    function addSubcategory(catId,subId){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'INSERT INTO pos_stock_subcategories(category_id,sub_id,subcategory) VALUES ('+catId+','+subId+',"' + el('modal_sub_cat_name').value + '");';
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error occurred performing the query.");
+                console.log(err);
+                return;
+            }
+            displayNotification('Done!', 'Category added');
+            getDropdowns();
+            toggleAlert(0);
+        });
+        alert(catId+"_"+el('modal_sub_cat_name').value);
+    }
+
+    function navigate(pos){
+        switch(pos) {
+            case 0:
+                window.location.href = "inventory.html";
+                break;
+            case 1:
+                window.location.href = "sales.html";
+                break;
+            case 2:
+                window.location.href = "repair.html";
+                break;
+        }
+    }
+</script>
+</html>

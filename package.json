@@ -12,6 +12,14 @@
     "electron": "^2.0.6"
   },
   "dependencies": {
-    "mysql": "^2.18.1"
+    "barcode": "^0.1.0",
+    "bootstrap": "^4.5.2",
+    "fs": "0.0.1-security",
+    "gm": "^1.23.1",
+    "jquery": "^3.5.1",
+    "jquery-confirm": "^3.3.4",
+    "moment": "^2.27.0",
+    "mysql": "^2.18.1",
+    "qrcode": "^1.4.4"
   }
 }

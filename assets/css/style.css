@@ -795,6 +795,93 @@ tfoot td {
     margin-right: 10px;
 }
 
+.sales-left .bottom .left .barcode {
+    font-size: x-large;
+    color: white;
+}
+
+.qr-img {
+    padding-top: 5%;
+    width: 200px;
+}
+
+.drop_with_add {
+    display: flex;
+}
+
+.drop_with_add button {
+    padding: 10px;
+    font-size: x-large;
+    color: white;
+    background-color: #186FCE;
+}
+
+.full-alert {
+    background-color: #1C1D1F;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    z-index: 9999;
+    text-align: center;
+    display: none;
+}
+
+.full-alert .alert-content {
+    height: 50%;
+    width: 30%;
+    margin: auto;
+    margin-top: 15%;
+    background-color: #4D4D4E;
+}
+
+.full-alert .alert-content h1 {
+    color: white;
+    font-size: x-large;
+    padding-bottom: 10px;
+}
+
+.full-alert .alert-content .alert-body {
+    text-align: left;
+    margin-left: 15%;
+    margin-right: 15%;
+    display: grid;
+}
+
+.full-alert .alert-content .alert-body h1 {
+    text-align: center;
+}
+
+.full-alert .alert-content .alert-body label {
+    width: 100%;
+    font-size: small;
+    color: white;
+}
+
+.full-alert .alert-content .alert-body input {
+    width: 100%;
+    background-color: #1C1D1F;
+    color: white;
+    font-size: medium;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.full-alert .alert-content .alert-body .alert-submit {
+    padding: 15px;
+    background-color: #186FCE;
+    color: white;
+    cursor: pointer;
+}
+
+.full-alert .alert-content .alert-close {
+    text-align: right;
+    padding-right: 2%;
+    right: 0;
+    color: white;
+    font-size: x-large;
+    cursor: pointer;
+}
+
 .sales-left .bottom .right {
     flex: 2;
     background-color: #1C1D1F;
@@ -849,8 +936,113 @@ tfoot td {
     flex: 1;
 }
 
+.sales-left .bottom .right .btn-container button {
+    width: 100%;
+    color: white;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    background-color: #186FCE;
+    cursor: pointer;
+}
+
+.sales-left .bottom .right .flex-wrapper {
+    display: flex;
+}
+
+.sales-left .bottom .right .btn-container h1 {
+    padding-top: 5px;
+}
+
+.sales-left .bottom .right .btn-container {
+    padding: 10px;
+    width: 20%;
+}
+
+.sales-left .bottom .right .detail-container {
+    width: 80%;
+    margin: auto;
+}
+
+.sales-left .bottom .right .detail-container .detail-line {
+    display: flex;
+}
+
+.sales-left .bottom .right .detail-container .detail-line h2 {
+    flex: 1;
+    font-size: medium;
+}
+
+.sales-left .bottom .right .detail-container .detail-line p {
+    flex: 2;
+    font-size: small;
+}
+
+.sales-left .bottom .left {
+    padding: 20px;
+    display: flex;
+}
+
+.sales-left .bottom .left .sale-btns {
+    flex: 1;
+    padding: 2px;
+    margin: 1px;
+    color: white;
+    background-color: #186FCE;
+    width: 100%;
+    height: 100%;
+}
+
+.sales-left .bottom .left .sale-btns .material-icons {
+    padding-top: 50%;
+    width: 100%;
+    height: 100%;
+}
+
+.sales-left .bottom .left .sale-btns :hover {
+    background-color: #4D4D4E;
+    cursor: pointer;
+}
+
+.table-search {
+    width: 100%;
+    display: flex;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.table-search input {
+    font-size: x-large;
+    flex: 3;
+    background-color: #5c5c5c;
+    padding: 6px;
+    color: white;
+}
+
+.table-search button {
+    color: white;
+    background-color: transparent;
+    padding-left: 10px;
+    padding-right: 10px;
+    cursor: pointer;
+}
+
+.table-search .radio-container {
+    flex: 2;
+    display: flex;
+    margin: auto;
+}
+
+.table-search .radio-container .radio-item {
+    flex: 1;
+}
+
+.table-search .radio-container .radio-item label {
+    font-size: medium;
+}
+
 .sales-mid {
     flex: 4;
+    text-align: left;
 }
 
 .sales-input {
@@ -863,6 +1055,7 @@ tfoot td {
 .sales-mid .cal {
     margin: 0;
     width: 100%;
+    padding-top: 2%;
 }
 
 .sales-mid .cal tr {
@@ -901,6 +1094,10 @@ tfoot td {
 
 .sales-mid .cal tr td :active {
     background-color: #4D4D4E;
+}
+
+.sales-mid h2 {
+    font-size: medium;
 }
 
 .sales-right {
@@ -947,6 +1144,177 @@ tfoot td {
     background-color: #186FCE;
 }
 
+.sales-mid input {
+    width: 100%;
+    font-size: 20px;
+    padding: 10px;
+    color: white;
+    background-color: #45494c;
+}
+
+.sales-mid label {
+    font-size: 11px;
+}
+
+.sales-mid .field {
+    padding-top: 10px;
+}
+
+.sales-mid select {
+    width: 100%;
+    font-size: 20px;
+    padding: 10px;
+    color: white;
+    background-color: #45494c;
+    border: transparent;
+}
+
+.sales-mid select :focus {
+    border: transparent;
+}
+
+.sales-mid .actions {
+    display: flex;
+}
+
+.sales-mid .actions .btn {
+    flex: 1;
+    padding: 10px;
+    background-color: #448CD8;
+    color: white;
+    margin: 5px;
+}
+
+.sales-mid .actions .btn :hover{
+    background-color: #186FCE;
+}
+
 ::-webkit-scrollbar {
     width: 1px;
-  }
+}
+
+.quickview-container {
+    font-size: small;
+}
+
+.quick-container {
+    display: flex;
+}
+
+.quick-topic {
+    flex: 2;
+}
+
+.quick-value {
+    flex: 3;
+    text-align: right;
+}
+
+.quick-img {
+    height: 100px;
+}
+
+/* Inventory Page */
+.inventory {
+    background-color: #202122;
+    position: relative;
+    height: 100%;
+    overflow: auto;
+    text-align: center;
+    font-family: 'Nunito', sans-serif;
+    color: white;
+}
+
+.inventory-header {
+    background-color: #186FCE;
+    height: 50px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.inventory-header .title {
+    font-size: 15px;
+    flex: 1;
+    text-align: left;
+    line-height: 50px;
+    margin-left: 10px;
+}
+
+.inventory-header .search {
+    flex: 2;
+    background-color: #448CD8;
+    margin: 5px;
+}
+
+.inventory-container {
+    display: flex;
+    flex-direction: row;
+    height: calc(100% - 50px);
+}
+
+.inventory-left {
+    flex: 8;
+    padding: 15px;
+}
+
+.inventory-mid {
+    flex: 4;
+    text-align: start;
+}
+
+.inventory-mid input {
+    width: 100%;
+    font-size: 20px;
+    padding: 10px;
+    color: white;
+    background-color: #45494c;
+}
+
+.inventory-mid label {
+    font-size: 11px;
+}
+
+.inventory-mid .field {
+    padding-top: 10px;
+}
+
+.inventory-mid select {
+    width: 100%;
+    font-size: 20px;
+    padding: 10px;
+    color: white;
+    background-color: #45494c;
+    border: transparent;
+}
+
+.inventory-mid select :focus {
+    border: transparent;
+}
+
+.inventory-mid .actions {
+    display: flex;
+}
+
+.inventory-mid .actions .btn {
+    flex: 1;
+    padding: 10px;
+    background-color: #448CD8;
+    color: white;
+    margin: 5px;
+}
+
+.inventory-mid .actions .btn :hover{
+    background-color: #186FCE;
+}
+
+.img-picker {
+    width: 100%;
+    height: 200px;
+    font-size: x-large;
+    cursor: pointer;
+}
+
+.img-picker img {
+    height: 100%;
+}

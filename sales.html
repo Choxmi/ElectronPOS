@@ -28,139 +28,76 @@
                         <th>UNIT PRICE</th>
                         <th>TOTAL</th>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>2500</td>
-                            <td>12500</td>
-                        </tr>
+                    <tbody id="sale_tbl">
                     </tbody>
                 </table>
             </div>
             <div class="bottom">
                 <div class="left">
-                
+                    <div class="sale-btns"> <i class="material-icons">print</i></div>
+                    <div class="sale-btns"> <i class="material-icons">payments</i></div>
+                    <div class="sale-btns"> <i class="material-icons">settings_backup_restore</i></div>
                 </div>
                 <div class="right">
                     <div class="halfline">
                         <div class="top-left">ITEMS</div>
-                        <div class="top-right">10</div>
+                        <div class="top-right" id="itm_count">0</div>
                         <div class="top-left">SUBTOTAL</div>
-                        <div class="top-right">Rs. 1500</div>
+                        <div class="top-right" id="itm_total">Rs. 0</div>
                     </div>
                     <div class="halfline">
                         <div class="top-left">DISCOUNTS</div>
-                        <div class="top-right">Rs. 0</div>
+                        <div class="top-right" id="itm_discount">Rs. 0</div>
                         <div class="top-left">PAYMENTS</div>
-                        <div class="top-right">Rs. 0</div>
+                        <div class="top-right" id="itm_payment">Rs. 0</div>
                     </div>
                     <div class="halfline">
                         <div class="top-left"></div>
                         <div class="top-right"></div>
                         <div class="top-left">BALANCE</div>
-                        <div class="top-right">Rs. 0</div>
+                        <div class="top-right" id="itm_balance">Rs. 0</div>
                     </div>
                     <div class="fullline">
                         <div class="bottom-left label">AMOUNT DUE</div>
-                        <div class="bottom-right total">Rs. 0</div>
+                        <div class="bottom-right total" id="itm_due_amount">Rs. 0</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="sales-mid">
-            <input type="text" class="sales-input" placeholder="Item Code"/>
-            <input type="text" class="sales-input" placeholder="Quantity"/>
+            <div class="field">
+                <label>Item Code</label>
+                <input type="text" placeholder="Item Code" onfocus="focusInput(1)" value="" id="item_code" />
+            </div>
+            <div class="field">
+                <label>Quantity</label>
+                <input type="number" placeholder="Quantity" onfocus="focusInput(2)" value="" id="quantity" />
+            </div>
             <table class="cal">
                 <tr>
-                    <td><button>7</button></td>
-                    <td><button>8</button></td>
-                    <td><button>9</button></td>
-                    <td><button><i class="material-icons">backspace</i></button></td>
+                    <td><button onclick="typeChar('7')">7</button></td>
+                    <td><button onclick="typeChar('8')">8</button></td>
+                    <td><button onclick="typeChar('9')">9</button></td>
                 </tr>
                 <tr>
-                    <td><button>4</button></td>
-                    <td><button>5</button></td>
-                    <td><button>6</button></td>
-                    <td><button>+</button></td>
+                    <td><button onclick="typeChar('4')">4</button></td>
+                    <td><button onclick="typeChar('5')">5</button></td>
+                    <td><button onclick="typeChar('6')">6</button></td>
                 </tr>
                 <tr>
-                    <td><button>1</button></td>
-                    <td><button>2</button></td>
-                    <td><button>3</button></td>
-                    <td><button>-</button></td>
+                    <td><button onclick="typeChar('1')">1</button></td>
+                    <td><button onclick="typeChar('2')">2</button></td>
+                    <td><button onclick="typeChar('3')">3</button></td>
                 </tr>
                 <tr>
-                    <td><button>0</button></td>
-                    <td><button>.</button></td>
-                    <td><button>=</button></td>
-                    <td><button class="return"><i class="material-icons">keyboard_return</i></button></td>
+                    <td><button onclick="typeChar('0')">0</button></td>
+                    <td><button onclick="typeChar('S')">S</button></td>
+                    <td><button onclick="typeChar('done')" class="return"><i class="material-icons">keyboard_return</i></button></td>
                 </tr>
             </table>
+            <h2>Quick View</h2>
+            <div id="quickview" class="quickview-container">
+            </div>
         </div>
         <div class="sales-right">
             <div class="icon-container">
@@ -177,6 +114,12 @@
                     </div>
                     <div class="indicate"></div>
                 </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="empty">
+                        <i class="material-icons">construction</i>
+                        REPAIR
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -184,56 +127,63 @@
 </body>
 <script>
     var mysql = require('mysql');
+    var remote = require('electron').remote;
+    var fs = remote.require('fs');
+    var active_input = null;
+    var selected_item = null;
+    var current_sale = [];
+    var item_count = 0;
+    var sub_total = 0;
+    var discounts = 0;
+    var payments = 0;
+    var balance = 0;
+    var due = 0;
 
     function el(selector) {
         return document.getElementById(selector);
     }
 
-    el('action-btn').addEventListener('click', function () {
-        // Get the mysql service
-        getFirstTenRows(function (rows) {
-            var html = '';
+    // el('action-btn').addEventListener('click', function () {
+    //     // Get the mysql service
+    //     getFirstTenRows(function (rows) {
+    //         var html = '';
 
-            rows.forEach(function (row) {
-                html += '<tr>';
-                html += '<td>';
-                html += row.id;
-                html += '</td>';
-                html += '<td>';
-                html += row.display_name;
-                html += '</td>';
-                html += '<td>';
-                html += row.city;
-                html += '</td>';
-                html += '</tr>';
-                console.log(row);
-            });
+    //         rows.forEach(function (row) {
+    //             html += '<tr>';
+    //             html += '<td>';
+    //             html += row.id;
+    //             html += '</td>';
+    //             html += '<td>';
+    //             html += row.display_name;
+    //             html += '</td>';
+    //             html += '<td>';
+    //             html += row.city;
+    //             html += '</td>';
+    //             html += '</tr>';
+    //             console.log(row);
+    //         });
 
-            document.querySelector('#table > tbody').innerHTML = html;
-            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
-            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
+    //         document.querySelector('#table > tbody').innerHTML = html;
+    //         document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
+    //         document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
 
-        });
-    }, false);
+    //     });
+    // }, false);
 
-    function getFirstTenRows(callback) {
+    function displayQuickView(code) {
         var mysql = require('mysql');
         var config = require("./db-config");
 
-        // Add the credentials to access your database
         var connection = mysql.createConnection(config.db);
 
-        // connect to mysql
         connection.connect(function (err) {
-            // in case of error
             if (err) {
                 console.log(err.code);
                 console.log(err.fatal);
             }
         });
-
-        // Perform a query
-        $query = 'SELECT id, display_name, city FROM user_profile ORDER BY id DESC LIMIT 8';
+        
+        $query = 'SELECT model_name, unit_price, img, stock_remaining, barcode FROM pos_stock_models WHERE barcode = "'+code+'" LIMIT 1';
 
         connection.query($query, function (err, rows, fields) {
             if (err) {
@@ -241,27 +191,127 @@
                 console.log(err);
                 return;
             }
-
-            callback(rows);
-
-            console.log("Query succesfully executed");
+            
+            var quickview = "";
+            if(rows.length === 0) {
+                quickview = '<h3>No Item found for this code.</h3>';
+                active_input.focus();
+                selected_item = null;
+            } else {
+                quickview = '<div class="quick-container">'+
+                '<div class="quick-topic">Model Name</div>'+
+                '<div class="quick-value">'+rows[0].model_name+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Stock Remaining</div>'+
+                '<div class="quick-value">'+rows[0].stock_remaining+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Unit Price</div>'+
+                '<div class="quick-value">'+rows[0].unit_price+'</div>'+
+                '</div>';
+                var _img = fs.readFileSync(rows[0].img).toString('base64');
+                quickview+='<img class="quick-img" src="data:image/png;base64,' + _img + '" />';
+                selected_item = rows[0];
+                el('quantity').focus();
+            }
+            el('quickview').innerHTML = quickview;
         });
 
-        // Close the connection
         connection.end(function () {
-            // The connection has been closed
         });
+    }
+
+    function focusInput(type) {
+        if(type === 1) {
+            active_input = el('item_code');
+        } else if(type === 2) {
+            active_input = el('quantity');
+        }
+    }
+
+    function typeChar(chr) {
+        if(chr !== "done") {
+            active_input.value+=chr;
+            active_input.focus();
+        } else {
+            if(active_input === el('item_code')){
+                displayQuickView(el('item_code').value);
+            } else if(active_input === el('quantity')) {
+                if(selected_item.stock_remaining >= parseInt(el('quantity').value)) {
+                    var index = current_sale.findIndex(item => item.barcode === el('item_code').value);
+                    console.log("INDEX",index);
+                    
+                    if(index !== -1) {
+                        if((current_sale[index].quantity + parseInt(el('quantity').value)) > selected_item.stock_remaining){
+                            alert("Not enough quantity available");
+                            return;
+                        } else {
+                            current_sale[index].quantity += parseInt(el('quantity').value);
+                            el('quantity').value = current_sale[index].quantity;
+                            current_sale[index].total = current_sale[index].quantity * parseFloat(selected_item.unit_price);
+                        }
+                    } else {
+                        current_sale.push({
+                            barcode: selected_item.barcode,
+                            quantity: parseInt(el('quantity').value),
+                            name: selected_item.model_name,
+                            unit_price: selected_item.unit_price,
+                            total: (parseInt(el('quantity').value) * parseFloat(selected_item.unit_price)),
+                        });
+                    }
+                    refreshTable();
+                } else {
+                    alert("Sorry not enough quantity available.");
+                    el('quantity').focus();
+                }
+            } else {
+                active_input.focus();
+            }
+        }
+    }
+
+    function refreshTable() {
+        var tbl_content = "";
+        item_count = 0;
+        sub_total = 0;
+        for(var i = 0; i < current_sale.length; i++){
+            tbl_content+='<tr>';
+            tbl_content+='<td>'+current_sale[i].barcode+'</td>';
+            tbl_content+='<td>'+current_sale[i].name+'</td>';
+            tbl_content+='<td>'+current_sale[i].quantity+'</td>';
+            tbl_content+='<td>'+current_sale[i].unit_price+'</td>';
+            tbl_content+='<td>'+current_sale[i].total+'</td>';
+            tbl_content+='</tr>';
+
+            item_count+=current_sale[i].quantity;
+            sub_total+=current_sale[i].total;
+        }
+        el('sale_tbl').innerHTML = tbl_content;
+        el('item_code').value = "";
+        el('quantity').value = "";
+        el('quickview').innerHTML = "";
+        el('itm_count').innerHTML = item_count;
+        el('itm_total').innerHTML = 'Rs. ' + sub_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        el('itm_discount').innerHTML = 'Rs. ' + 0;
+        el('itm_payment').innerHTML = 'Rs. ' + 0;
+        el('itm_balance').innerHTML = 'Rs. ' + 0;
+        el('itm_due_amount').innerHTML = 'Rs. ' + sub_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        el('item_code').focus();
     }
 
     function navigate(pos) {
         switch(pos) {
             case 0:
-                console.log("Navigate To Stock");
+                window.location.href = "inventory.html"
                 break;
             case 1:
-                console.log("Navigate To Sales");
+                window.location.href = "sales.html"
+                break;
+            case 2:
+                window.location.href = "repair.html";
                 break;
         }
     }
+
+    el('item_code').focus();
 </script>
 </html>
