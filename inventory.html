@@ -150,7 +150,7 @@
                         REPAIR
                     </div>
                 </div>
-                <div class="item" onclick="navigate(2)">
+                <div class="item" onclick="navigate(3)">
                     <div class="empty">
                         <i class="material-icons">attach_money</i>
                         EXPENSES
@@ -164,8 +164,7 @@
 <script>
     var mysql = require('mysql');
     var moment = require('moment');
-    const QRCode = require('qrcode');
-    var barcode = require('barcode');
+    var JsBarcode = require('jsbarcode');
 
     var remote = require('electron').remote;
     var fs = remote.require('fs');
@@ -498,19 +497,20 @@
             _target.innerHTML = "Select Image";
         }
 
-        var code39 = barcode('code39', {
-            data: inventory_list[row].barcode,
-            width: 350,
-            height: 100,
-        });
+        // var code39 = barcode('code39', {
+        //     data: inventory_list[row].barcode,
+        //     width: 350,
+        //     height: 100,
+        // });
 
-        code39.getBase64(function (err, imgsrc) {
-            if (err) throw err;
-            console.log("Img Source",imgsrc);
+        // code39.getBase64(function (err, imgsrc) {
+        //     if (err) throw err;
+        //     console.log("Img Source",imgsrc);
             
-            var img = document.getElementById('canvas');
-            img.src = imgsrc;
-        });
+        //     var img = document.getElementById('canvas');
+        //     img.src = imgsrc;
+        // });
+        JsBarcode("#canvas", inventory_list[row].barcode);
     }
 
     function toggleAlert(action){

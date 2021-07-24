@@ -120,6 +120,12 @@
                         REPAIR
                     </div>
                 </div>
+                <div class="item" onclick="navigate(3)">
+                    <div class="empty">
+                        <i class="material-icons">attach_money</i>
+                        EXPENSES
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -191,6 +197,8 @@
                 console.log(err);
                 return;
             }
+
+            console.log("Query",$query,"Result",rows);
             
             var quickview = "";
             if(rows.length === 0) {
@@ -236,32 +244,36 @@
             if(active_input === el('item_code')){
                 displayQuickView(el('item_code').value);
             } else if(active_input === el('quantity')) {
-                if(selected_item.stock_remaining >= parseInt(el('quantity').value)) {
-                    var index = current_sale.findIndex(item => item.barcode === el('item_code').value);
-                    console.log("INDEX",index);
-                    
-                    if(index !== -1) {
-                        if((current_sale[index].quantity + parseInt(el('quantity').value)) > selected_item.stock_remaining){
-                            alert("Not enough quantity available");
-                            return;
+                if(selected_item !== null) {
+                    if(selected_item.stock_remaining >= parseInt(el('quantity').value)) {
+                        var index = current_sale.findIndex(item => item.barcode === el('item_code').value);
+                        console.log("INDEX",index);
+                        
+                        if(index !== -1) {
+                            if((current_sale[index].quantity + parseInt(el('quantity').value)) > selected_item.stock_remaining){
+                                alert("Not enough quantity available");
+                                return;
+                            } else {
+                                current_sale[index].quantity += parseInt(el('quantity').value);
+                                el('quantity').value = current_sale[index].quantity;
+                                current_sale[index].total = current_sale[index].quantity * parseFloat(selected_item.unit_price);
+                            }
                         } else {
-                            current_sale[index].quantity += parseInt(el('quantity').value);
-                            el('quantity').value = current_sale[index].quantity;
-                            current_sale[index].total = current_sale[index].quantity * parseFloat(selected_item.unit_price);
+                            current_sale.push({
+                                barcode: selected_item.barcode,
+                                quantity: parseInt(el('quantity').value),
+                                name: selected_item.model_name,
+                                unit_price: selected_item.unit_price,
+                                total: (parseInt(el('quantity').value) * parseFloat(selected_item.unit_price)),
+                            });
                         }
+                        refreshTable();
                     } else {
-                        current_sale.push({
-                            barcode: selected_item.barcode,
-                            quantity: parseInt(el('quantity').value),
-                            name: selected_item.model_name,
-                            unit_price: selected_item.unit_price,
-                            total: (parseInt(el('quantity').value) * parseFloat(selected_item.unit_price)),
-                        });
+                        alert("Sorry not enough quantity available.");
+                        el('quantity').focus();
                     }
-                    refreshTable();
                 } else {
-                    alert("Sorry not enough quantity available.");
-                    el('quantity').focus();
+                    alert("No Stock");
                 }
             } else {
                 active_input.focus();

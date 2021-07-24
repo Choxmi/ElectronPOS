@@ -2,7 +2,7 @@
   "db": {
     "host": "localhost",
     "user": "root",
-    "password": "123456",
+    "password": "",
     "database": "indira_communication"
   }
 }

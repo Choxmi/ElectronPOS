@@ -11,7 +11,7 @@ function createWindow () {
     win = new BrowserWindow({width: 800, height: 600, icon: path.join(__dirname, 'assets/icons/png/64x64.png')})
 
     // and load the index.html of the app.
-    win.loadFile('index.html')
+    win.loadFile('inventory.html')
 
     // Open the DevTools.
     win.webContents.openDevTools()
