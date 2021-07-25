@@ -34,7 +34,7 @@
             </div>
             <div class="bottom">
                 <div class="left">
-                    <div class="sale-btns"> <i class="material-icons">print</i></div>
+                    <div class="sale-btns" onclick="printReceipt()"> <i class="material-icons">print</i></div>
                     <div class="sale-btns"> <i class="material-icons">payments</i></div>
                     <div class="sale-btns"> <i class="material-icons">settings_backup_restore</i></div>
                 </div>
@@ -47,9 +47,13 @@
                     </div>
                     <div class="halfline">
                         <div class="top-left">DISCOUNTS</div>
-                        <div class="top-right" id="itm_discount">Rs. 0</div>
+                        <div class="top-right inline">
+                            Rs. <input type="number" id="itm_discount" onblur="addDiscount()"/>
+                        </div>
                         <div class="top-left">PAYMENTS</div>
-                        <div class="top-right" id="itm_payment">Rs. 0</div>
+                        <div class="top-right inline">
+                            Rs. <input type="number" id="itm_payment"/>
+                        </div>
                     </div>
                     <div class="halfline">
                         <div class="top-left"></div>
@@ -65,6 +69,10 @@
             </div>
         </div>
         <div class="sales-mid">
+            <div class="field">
+                <label>Item Name</label>
+                <input type="text" placeholder="Item Name" value="" id="item_name" />
+            </div>
             <div class="field">
                 <label>Item Code</label>
                 <input type="text" placeholder="Item Code" onfocus="focusInput(1)" value="" id="item_code" />
@@ -206,6 +214,7 @@
                 active_input.focus();
                 selected_item = null;
             } else {
+                el('item_name').value = rows[0].model_name;
                 quickview = '<div class="quick-container">'+
                 '<div class="quick-topic">Model Name</div>'+
                 '<div class="quick-value">'+rows[0].model_name+'</div>'+
@@ -297,17 +306,71 @@
             item_count+=current_sale[i].quantity;
             sub_total+=current_sale[i].total;
         }
+
+        let net_total = sub_total - el('itm_discount').value;
+
         el('sale_tbl').innerHTML = tbl_content;
         el('item_code').value = "";
+        el('item_name').value = "";
         el('quantity').value = "";
         el('quickview').innerHTML = "";
         el('itm_count').innerHTML = item_count;
         el('itm_total').innerHTML = 'Rs. ' + sub_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        el('itm_discount').innerHTML = 'Rs. ' + 0;
-        el('itm_payment').innerHTML = 'Rs. ' + 0;
-        el('itm_balance').innerHTML = 'Rs. ' + 0;
-        el('itm_due_amount').innerHTML = 'Rs. ' + sub_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        // el('itm_discount').value = '';
+        // el('itm_payment').value = '';
+        el('itm_balance').innerHTML = 'Rs. ' + (el('itm_payment').value - net_total);
+        el('itm_due_amount').innerHTML = 'Rs. ' + net_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         el('item_code').focus();
+    }
+
+    function printReceipt() {
+        const {PosPrinter} = require('electron').remote.require("electron-pos-printer");
+        const path = require("path");
+        
+        const options = {
+            preview: true,               // Preview in window or print
+            width: '250px',               //  width of content body
+            margin: '0 0 0 0',            // margin of content body
+            copies: 1,                    // Number of copies to print
+            printerName: 'XP-365B',        // printerName: string, check with webContent.getPrinters()
+            timeOutPerLine: 400,
+            pageSize: { height: 301000, width: 71000 }  // page size
+        }
+
+        const data = [
+            {
+                type: 'table',
+                // style the table
+                style: 'border: none',
+                // list of the columns to be rendered in the table header
+                tableHeader: ['Animal', 'Age'],
+                // multi dimensional array depicting the rows and columns of the table body
+                tableBody: [
+                    ['Cat', 2],
+                    ['Dog', 4],
+                    ['Horse', 12],
+                    ['Pig', 4],
+                ],
+                // custom style for the table header
+                tableHeaderStyle: 'background-color: #000; color: white;',
+                // custom style for the table body
+                tableBodyStyle: 'border: none',
+                // custom style for the table footer
+                tableFooterStyle: 'background-color: #000; color: white;',
+            }
+        ];
+
+        PosPrinter.print(data, options)
+        .then(() => {
+            console.log("Receipt Printed");
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+    }
+
+    function addDiscount() {
+        // itm_due_amount
     }
 
     function navigate(pos) {
@@ -321,9 +384,125 @@
             case 2:
                 window.location.href = "repair.html";
                 break;
+            case 3:
+                window.location.href = "expenses.html";
+                break;
+            default:
+                break;
         }
     }
 
+    function checkName(name) {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        
+        $query = 'SELECT model_name, unit_price, img, stock_remaining, barcode FROM pos_stock_models WHERE model_name = "'+name+'" LIMIT 1';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            console.log("Query",$query,"Result",rows);
+            
+            var quickview = "";
+            if(rows.length === 0) {
+                quickview = '<h3>No Item found for this code.</h3>';
+                active_input.focus();
+                selected_item = null;
+            } else {
+                el('item_code').value = rows[0].barcode;
+                quickview = '<div class="quick-container">'+
+                '<div class="quick-topic">Model Name</div>'+
+                '<div class="quick-value">'+rows[0].model_name+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Stock Remaining</div>'+
+                '<div class="quick-value">'+rows[0].stock_remaining+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Unit Price</div>'+
+                '<div class="quick-value">'+rows[0].unit_price+'</div>'+
+                '</div>';
+                var _img = fs.readFileSync(rows[0].img).toString('base64');
+                quickview+='<img class="quick-img" src="data:image/png;base64,' + _img + '" />';
+                selected_item = rows[0];
+                el('quantity').focus();
+            }
+            el('quickview').innerHTML = quickview;
+        });
+
+        connection.end(function () {
+        });
+    }
+
     el('item_code').focus();
+
+    el('item_code').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            displayQuickView(el('item_code').value);
+        }
+    });
+
+    el('item_name').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            checkName(el('item_name').value);
+        }
+    });
+
+    el('itm_discount').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            refreshTable();
+        }
+    });
+
+    el('itm_payment').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            refreshTable();
+        }
+    });
+
+    el('quantity').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 13 ) {
+            if(el('item_code').value !== null && el('item_code').value !== "") {
+                typeChar('done');
+            }
+        }
+    });
+
+    document.onkeydown = function(evt) {
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        
+        // Tab Key
+        if (charCode == 192 ) {
+            el('itm_discount').focus();
+        }
+
+        // Escape key
+        if (charCode == 27 ) {
+            el('itm_payment').focus();
+        }
+    };
+
 </script>
 </html>

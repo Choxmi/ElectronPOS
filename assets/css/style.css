@@ -1318,3 +1318,19 @@ tfoot td {
 .img-picker img {
     height: 100%;
 }
+
+#itm_discount {
+    width: 100px;
+    padding: 5px;
+    background: #353535;
+    color: white;
+    text-align: right;
+}
+
+#itm_payment {
+    width: 100px;
+    padding: 5px;
+    background: #353535;
+    color: white;
+    text-align: right;
+}
