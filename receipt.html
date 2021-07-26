@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head></head>
+    <body>
+        <h1>TEST</h1>
+        <input type="button" onclick="printPage()" value="Print" id="printBtn"/>
+
+        <script>
+            const $btn = document.querySelector("#printBtn");
+            $btn.addEventListener("click",()=>{
+                console.log("Printing");
+                window.print();
+            })
+        </script>
+    </body>
+</html>

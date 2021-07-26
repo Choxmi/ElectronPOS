@@ -9,6 +9,14 @@
 </head>
 
 <body>
+<div class="full-alert" id="alert">
+    <div class="alert-content">
+        <div class="alert-close" onclick="toggleAlert(0)">X</div>
+        <div class="alert-body" id="alert-body">
+            
+        </div>
+    </div>
+</div>
 <div class="sales">
     <div class="sales-header">
         <div class="title">Sales</div>
@@ -34,8 +42,8 @@
             </div>
             <div class="bottom">
                 <div class="left">
-                    <div class="sale-btns" onclick="printReceipt()"> <i class="material-icons">print</i></div>
-                    <div class="sale-btns"> <i class="material-icons">payments</i></div>
+                    <div class="sale-btns" onclick="toggleAlert(1)"> <i class="material-icons">print</i></div>
+                    <!-- <div class="sale-btns"> <i class="material-icons">save</i></div> -->
                     <div class="sale-btns"> <i class="material-icons">settings_backup_restore</i></div>
                 </div>
                 <div class="right">
@@ -48,7 +56,7 @@
                     <div class="halfline">
                         <div class="top-left">DISCOUNTS</div>
                         <div class="top-right inline">
-                            Rs. <input type="number" id="itm_discount" onblur="addDiscount()"/>
+                            Rs. <input type="number" id="itm_discount"/>
                         </div>
                         <div class="top-left">PAYMENTS</div>
                         <div class="top-right inline">
@@ -148,6 +156,7 @@
     var current_sale = [];
     var item_count = 0;
     var sub_total = 0;
+    let net_total = 0;
     var discounts = 0;
     var payments = 0;
     var balance = 0;
@@ -245,6 +254,52 @@
         }
     }
 
+    function toggleAlert(action){
+        if(action === 0){
+            el('alert').style.display = "none";
+        } else {
+            var alert_content = "";
+            if(action === 1){
+                alert_content = `<h1>PRINT RECEIPT</h1>
+                <label>Bill is about to be saved and printed. Want to continue?</label>
+                <button class="alert-submit" onclick="saveReceipt()">Print</button>`;
+            } else if(action === 2){
+                alert_content = `<h1>ADD SUB CATEGORY</h1>
+                <label>Bill is about to be saved and printed. Want to continue?</label>
+                <button class="alert-submit" onclick="printReceipt()">Print</button>`;
+            }   
+            el('alert-body').innerHTML = alert_content;                               
+            el('alert').style.display = "block"
+        }                                              
+    }
+
+    function saveReceipt() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        discounts = el("itm_discount").value;
+        let resDate = new Date();
+        let dateStr = resDate.getFullYear()+"-"+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+"-"+resDate.getDate();
+        $query = 'SELECT COUNT(receipt_id) AS total FROM pos_sales WHERE date = "'+dateStr+'"';
+
+        connection.query($query, function (err, rows, fields) {
+            if(rows.length > 0){
+                let seq = rows[0].total + 1;
+                let receipt_id = "R"+resDate.getFullYear()+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+resDate.getDate()+seq;
+                $query1 = 'INSERT INTO pos_sales(receipt_id,sales_lines,net_amount,discount,timestamp,date) VALUES("'+receipt_id+'","'+JSON.stringify(current_sale)+'",'+net_total+','+discounts+','+resDate.getTime()+',"'+dateStr+'")'
+            }
+        });
+        printReceipt();
+    }
+
     function typeChar(chr) {
         if(chr !== "done") {
             active_input.value+=chr;
@@ -307,7 +362,7 @@
             sub_total+=current_sale[i].total;
         }
 
-        let net_total = sub_total - el('itm_discount').value;
+        net_total = sub_total - el('itm_discount').value;
 
         el('sale_tbl').innerHTML = tbl_content;
         el('item_code').value = "";
@@ -323,54 +378,19 @@
         el('item_code').focus();
     }
 
-    function printReceipt() {
-        const {PosPrinter} = require('electron').remote.require("electron-pos-printer");
-        const path = require("path");
-        
-        const options = {
-            preview: true,               // Preview in window or print
-            width: '250px',               //  width of content body
-            margin: '0 0 0 0',            // margin of content body
-            copies: 1,                    // Number of copies to print
-            printerName: 'XP-365B',        // printerName: string, check with webContent.getPrinters()
-            timeOutPerLine: 400,
-            pageSize: { height: 301000, width: 71000 }  // page size
-        }
-
-        const data = [
+    async function printReceipt() {
+        const response = await fetch(
+            "http://localhost:8900/",
             {
-                type: 'table',
-                // style the table
-                style: 'border: none',
-                // list of the columns to be rendered in the table header
-                tableHeader: ['Animal', 'Age'],
-                // multi dimensional array depicting the rows and columns of the table body
-                tableBody: [
-                    ['Cat', 2],
-                    ['Dog', 4],
-                    ['Horse', 12],
-                    ['Pig', 4],
-                ],
-                // custom style for the table header
-                tableHeaderStyle: 'background-color: #000; color: white;',
-                // custom style for the table body
-                tableBodyStyle: 'border: none',
-                // custom style for the table footer
-                tableFooterStyle: 'background-color: #000; color: white;',
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    data: "TEST DATA\n\n\n"
+                })
             }
-        ];
-
-        PosPrinter.print(data, options)
-        .then(() => {
-            console.log("Receipt Printed");
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-    }
-
-    function addDiscount() {
-        // itm_due_amount
+        )
     }
 
     function navigate(pos) {
