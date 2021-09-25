@@ -762,6 +762,10 @@ tfoot td {
     overflow: auto;
 }
 
+.expense-override {
+    height: 100% !important;
+}
+
 .sales-left .item-container table {
     width: 100%;
     border-collapse: collapse;

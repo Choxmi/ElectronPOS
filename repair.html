@@ -3,18 +3,22 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
     <link rel="stylesheet" href="assets/css/style.css">
     <title>Repair</title>
 </head>
 
 <body>
+<div class="full-alert" id="alert">
+    <div class="alert-content">
+        <div class="alert-close" onclick="toggleAlert(0)">X</div>
+        <div class="alert-body" id="alert-body">
+            
+        </div>
+    </div>
+</div>
 <div class="sales">
     <div class="sales-header">
         <div class="title">Repair</div>
-        <div class="search">
-            <!-- <input type="text"/> -->
-        </div>
         <div class="end"></div>
     </div>
     <div class="sale-container">
@@ -22,82 +26,61 @@
             <div class="item-container">
                 <table>
                     <thead>
-                        <th>TYPE</th>
-                        <th>DESCRIPTION</th>
+                        <th>REPAIR TYPE</th>
+                        <th>TASK</th>
+                        <th>DELIVER ON</th>
                         <th>AMOUNT</th>
-                        <th>TOTAL</th>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>0111</td>
-                            <td>SFfsd</td>
-                            <td>5</td>
-                            <td>12500</td>
-                        </tr>
+                    <tbody id="repair_tbody">
                     </tbody>
                 </table>
             </div>
             <div class="bottom">
                 <div class="left">
                     <div class="sale-btns"> <i class="material-icons">print</i></div>
-                    <div class="sale-btns"> <i class="material-icons">search</i></div>
                     <div class="sale-btns"> <i class="material-icons">settings_backup_restore</i></div>
                 </div>
                 <div class="right">
                     <div class="halfline">
                         <div class="top-left">ITEMS</div>
                         <div class="top-right">10</div>
-                        <div class="top-left">SUBTOTAL</div>
-                        <div class="top-right">Rs. 1500</div>
-                    </div>
-                    <div class="halfline">
-                        <div class="top-left">DISCOUNTS</div>
-                        <div class="top-right">Rs. 0</div>
-                        <div class="top-left">PAYMENTS</div>
-                        <div class="top-right">Rs. 0</div>
-                    </div>
-                    <div class="halfline">
-                        <div class="top-left"></div>
-                        <div class="top-right"></div>
-                        <div class="top-left">BALANCE</div>
-                        <div class="top-right">Rs. 0</div>
+                        <div class="top-left">DUE ON</div>
+                        <div class="top-right">2021/05/02</div>
                     </div>
                     <div class="fullline">
-                        <div class="bottom-left label">AMOUNT DUE</div>
+                        <div class="bottom-left label">TOTAL AMOUNT</div>
                         <div class="bottom-right total">Rs. 0</div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="sales-mid">
-            <input type="text" class="sales-input" placeholder="Item Code"/>
-            <input type="text" class="sales-input" placeholder="Quantity"/>
-            <table class="cal">
-                <tr>
-                    <td><button>7</button></td>
-                    <td><button>8</button></td>
-                    <td><button>9</button></td>
-                    <td><button><i class="material-icons">backspace</i></button></td>
-                </tr>
-                <tr>
-                    <td><button>4</button></td>
-                    <td><button>5</button></td>
-                    <td><button>6</button></td>
-                    <td><button>+</button></td>
-                </tr>
-                <tr>
-                    <td><button>1</button></td>
-                    <td><button>2</button></td>
-                    <td><button>3</button></td>
-                    <td><button>-</button></td>
-                </tr>
-                <tr>
-                    <td><button>0</button></td>
-                    <td><button>.</button></td>
-                    <td><button>=</button></td>
-                    <td><button class="return"><i class="material-icons">keyboard_return</i></button></td>
-                </tr>
-            </table>
+            <div class="field">
+                <label>Repair Type</label>
+                <div class="drop_with_add">
+                    <select id="repair_type">
+                    </select>
+                    <button onclick="toggleAlert(1)">+</button>
+                </div>
+            </div>
+            <div class="field">
+                <label>Task</label>
+                <input type="text" placeholder="Task" value="" id="task" />
+            </div>
+            <div class="field">
+                <label>Deliver In (Days)</label>
+                <input type="number" placeholder="Deliver In" value="" id="deliver_in" />
+            </div>
+            <div class="field">
+                <label>Amount</label>
+                <input type="number" placeholder="Amount" value="" id="amount" />
+            </div>
+            <br/><br/>
+            <div class="actions">
+                <button class="btn" id="action-add">ADD</button>
+                <button class="btn" id="action-delete">DELETE</button>
+            </div>
+
         </div>
         <div class="sales-right">
             <div class="icon-container">
@@ -123,7 +106,7 @@
                 <div class="item" onclick="navigate(3)">
                     <div class="empty">
                         <i class="material-icons">attach_money</i>
-                        EXPENSES
+                        CASH
                     </div>
                 </div>
             </div>
@@ -133,56 +116,79 @@
 </body>
 <script>
     var mysql = require('mysql');
+    let repairLines = [];
 
     function el(selector) {
         return document.getElementById(selector);
     }
 
-    el('action-btn').addEventListener('click', function () {
-        // Get the mysql service
-        getFirstTenRows(function (rows) {
-            var html = '';
-
-            rows.forEach(function (row) {
-                html += '<tr>';
-                html += '<td>';
-                html += row.id;
-                html += '</td>';
-                html += '<td>';
-                html += row.display_name;
-                html += '</td>';
-                html += '<td>';
-                html += row.city;
-                html += '</td>';
-                html += '</tr>';
-                console.log(row);
+    el('action-add').addEventListener('click', function () {
+        if(el('task').value === "" || el('deliver_in').value === "" || el('amount').value === "") {
+            alert("Please fill the required fields");
+        } else {
+            repairLines.push({
+                repair_type: el('repair_type').innerHTML,
+                repair_type_id: el('repair_type').value,
+                task: el('task').value,
+                deliver: el('deliver_in').value,
+                amount: el('amount').value
             });
 
-            document.querySelector('#table > tbody').innerHTML = html;
-            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
-            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
+            el('task').value = '';
+            el('deliver_in').value = '';
+            el('amount').value = '';
 
-        });
+            el('repair_tbody').innerHTML = '';
+            let tbody = '';
+            for(let i = 0; i < repairLines.length; i++) {
+                tbody += `<tr>
+                    <td>`+repairLines[i].repair_type+`</td>
+                    <td>`+repairLines[i].task+`</td>
+                    <td>`+repairLines[i].deliver+`</td>
+                    <td>`+repairLines[i].amount+`</td>
+                </tr>`
+            }
+            el('repair_tbody').innerHTML = tbody;
+        }
     }, false);
 
-    function getFirstTenRows(callback) {
+    function toggleAlert(action){
+        if(action === 0){
+            el('alert').style.display = "none";
+        } else {
+            var alert_content = "";
+            if(action === 1){
+                alert_content = `<h1>ADD REPAIR TYPE</h1>
+                <label>Reapir Type</label>
+                <input type="text" placeholder="Repair Type" id="repair_type_new" />
+                <button class="alert-submit" onclick="addRepairType()">SUBMIT</button>`;
+            } else if(action === 2){
+                alert_content = `<h1>ADD SUB CATEGORY</h1>
+                <label>Category</label>
+                <input type="hidden" value="`+el('item_category').options[el('item_category').selectedIndex].value+`" />
+                <input type="text" value="`+el('item_category').options[el('item_category').selectedIndex].innerHTML+`" disabled />
+                <label>Sub Category</label>
+                <input type="text" placeholder="Subcategory" id="modal_sub_cat_name" />
+                <button class="alert-submit" onclick="triggerAddSubCategory(`+el('item_category').options[el('item_category').selectedIndex].value+`)">SUBMIT</button>`;
+            }   
+            el('alert-body').innerHTML = alert_content;                               
+            el('alert').style.display = "block"
+        }
+    }
+
+    function getDropdowns() {
         var mysql = require('mysql');
         var config = require("./db-config");
-
-        // Add the credentials to access your database
         var connection = mysql.createConnection(config.db);
 
-        // connect to mysql
         connection.connect(function (err) {
-            // in case of error
             if (err) {
                 console.log(err.code);
                 console.log(err.fatal);
             }
         });
 
-        // Perform a query
-        $query = 'SELECT id, display_name, city FROM user_profile ORDER BY id DESC LIMIT 8';
+        $query = 'SELECT * FROM pos_repair_types';
 
         connection.query($query, function (err, rows, fields) {
             if (err) {
@@ -190,14 +196,53 @@
                 console.log(err);
                 return;
             }
-
-            callback(rows);
-
-            console.log("Query succesfully executed");
+            cat_dropdown = rows;
+            
+            var typeOptions = "";
+            for(var i = 0; i < rows.length; i++){
+                typeOptions+='<option value='+rows[i].type_id+'>'+rows[i].type+'</option>';
+            }
+            el('repair_type').innerHTML =  typeOptions;
         });
 
         connection.end(function () {
         });
+    }
+
+    getDropdowns();
+
+    function addRepairType() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'INSERT INTO pos_repair_types(type) VALUES ("' + el('repair_type_new').value + '");';
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error occurred performing the query.");
+                console.log(err);
+                return;
+            }
+            displayNotification('Done!', 'Type added');
+            getDropdowns();
+            toggleAlert(0);
+        });
+    }
+
+    function displayNotification(titleValue, notificationValue){
+        const notification = {
+            title: titleValue,
+            body: notificationValue
+        }
+
+        const myNotification = new window.Notification(notification.title, notification)
     }
 
     function navigate(pos) {
