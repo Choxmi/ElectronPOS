@@ -281,19 +281,43 @@
                 console.log(err.fatal);
             }
         });
+        console.log("Saving Sale");
         discounts = el("itm_discount").value;
         let resDate = new Date();
         let dateStr = resDate.getFullYear()+"-"+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+"-"+resDate.getDate();
         $query = 'SELECT COUNT(receipt_id) AS total FROM pos_sales WHERE date = "'+dateStr+'"';
-
+        console.log("Getting Query",$query);
         connection.query($query, function (err, rows, fields) {
-            if(rows.length > 0){
-                let seq = rows[0].total + 1;
-                let receipt_id = "R"+resDate.getFullYear()+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+resDate.getDate()+seq;
-                $query1 = 'INSERT INTO pos_sales(receipt_id,sales_lines,net_amount,discount,timestamp,date) VALUES("'+receipt_id+'","'+JSON.stringify(current_sale)+'",'+net_total+','+discounts+','+resDate.getTime()+',"'+dateStr+'")'
+            if(err) {
+                console.log("Error occured",err);
+                return;
             }
+            let seq = rows[0].total + 1;
+            let receipt_id = "X"+resDate.getFullYear()+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+resDate.getDate()+seq;
+            $query1 = "INSERT INTO pos_sales(receipt_id,sales_lines,net_amount,discount,timestamp,date) VALUES('"+receipt_id+"','"+JSON.stringify(current_sale)+"',"+net_total+","+(discounts !== null || discounts !== undefined ? 0 : discounts)+","+resDate.getTime()+",'"+dateStr+"')";
+            console.log("QUERY 1",$query1);
+            connection.query($query1, function(error, rs){
+                if(error){
+                    console.log("Error inserting",error);
+                    return;
+                }
+                updateStock();
+            })
         });
-        printReceipt();
+        // printReceipt();
+    }
+
+    async function updateStock() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+        console.log("Update Stock",current_sale);
+        for(let i = 0; i < current_sale.length; i++) {
+            let $query = `UPDATE pos_stock_models SET stock_remaining = stock_remaining - ${current_sale[i].quantity} WHERE barcode = '${current_sale[i].barcode}'`;
+            console.log("QUERY",$query);
+            await connection.query($query);
+        }
     }
 
     function typeChar(chr) {

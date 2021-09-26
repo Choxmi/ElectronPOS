@@ -45,7 +45,7 @@
                         <th>ITEM Code</th>
                         <th>CATEGORY</th>
                         <th>SUBCATEGORY</th>
-                        <th>MODEL</th>
+                        <th>NAME</th>
                         <th>UNIT PRICE</th>
                     </thead>
                     <tbody id="inventory_table">
@@ -89,7 +89,7 @@
                 <div class="drop_with_add">
                     <select id="item_category">
                     </select>
-                    <button onclick="toggleAlert(1)">+</button>
+                    <button id="item_category_add" onclick="toggleAlert(1)">+</button>
                 </div>
             </div>
             <div class="field">
@@ -97,7 +97,7 @@
                 <div class="drop_with_add">
                     <select id="item_sub">
                     </select>
-                    <button onclick="toggleAlert(2)">+</button>
+                    <button id="item_sub_add" onclick="toggleAlert(2)">+</button>
                 </div>
             </div>
             <!-- <div class="field">
@@ -115,7 +115,7 @@
 
             <div class="field">
                 <label>Unit Price</label>
-                <input type="number" placeholder="Current Stock" value="0" id="item_price" />
+                <input type="number" placeholder="Unit price" value="0" id="item_price" />
             </div>
             <div class="field">
                 <label>Image</label>
@@ -124,6 +124,7 @@
             </div>
             <div class="actions">
                 <button class="btn" id="action-add">ADD</button>
+                <button class="btn" id="action-reset">RESET</button>
                 <button class="btn" id="action-update">UPDATE</button>
                 <button class="btn" id="action-delete">DELETE</button>
             </div>
@@ -172,6 +173,8 @@
     var sub_cat_dropdown = [];
     var inventory_list = [];
 
+    let selectedRow = null;
+
     function el(selector){
         return document.getElementById(selector);
     }
@@ -197,11 +200,23 @@
         });
     });
 
+    el('action-reset').style.display = 'none';
+    el('action-update').style.display = 'none';
+    el('action-delete').style.display = 'none';
+
     el('action-add').addEventListener('click', function (){
         if(el('item_name').value === "" || el('item_stock').value == 0 || el('item_price').value == 0) {
             alert("Please fill the required fields");
         } else {
             addInventory();
+        }
+    });
+
+    el('action-update').addEventListener('click', function (){
+        if(el('item_name').value === "" || el('item_stock').value == 0 || el('item_price').value == 0) {
+            alert("Please fill the required fields");
+        } else {
+            updateInventory();
         }
     });
 
@@ -214,31 +229,37 @@
         el('item_sub').innerHTML =  subCategoryOptions;
     });
 
-    el('action-delete').addEventListener('click', function (){
-        // Get the mysql service
-        getFirstTenRows(function (rows) {
-            var html = '';
+    el('action-reset').addEventListener('click', function (){
+        reset();
+    }, false);
 
-            rows.forEach(function (row) {
-                html += '<tr>';
-                html += '<td>';
-                html += row.id;
-                html += '</td>';
-                html += '<td>';
-                html += row.display_name;
-                html += '</td>';
-                html += '<td>';
-                html += row.city;
-                html += '</td>';
-                html += '</tr>';
-                console.log(row);
+    el('action-delete').addEventListener('click', function (){
+        let res = confirm("Do you want to delete this item?");
+        console.log("Delete res",res);
+        if(res === true) {
+            var mysql = require('mysql');
+            var config = require("./db-config");
+            var connection = mysql.createConnection(config.db);
+
+            connection.connect(function (err) {
+                if (err) {
+                    console.log(err.code);
+                    console.log(err.fatal);
+                }
             });
 
-            document.querySelector('#table > tbody').innerHTML = html;
-            document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
-            document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
-
-        });
+            $query = `DELETE FROM pos_stock_models WHERE barcode = "${el('barcode').innerHTML}"`;
+            connection.query($query, function (err, rows, fields) {
+                if (err) {
+                    console.log("An error ocurred performing the query.");
+                    console.log(err);
+                    return;
+                }
+                fillTable(null);
+                reset();
+                displayNotification('Done!', 'Asset Deleted');
+            });
+        }
     }, false);
 
     async function getMaxModelID(cat,sub){
@@ -266,6 +287,67 @@
         });
 
         connection.end(function () {
+        });
+    }
+
+    async function reset(row){
+        el('barcode').innerHTML = "";
+
+        el('item_name').value = "";
+        el('item_stock').value = "";
+        el('item_price').value = "";
+        el('last_updated').innerHTML = "";
+        el('cur_stock').innerHTML = "";
+
+        el('item_category').disabled = false;
+        el('item_category_add').disabled = false;
+        el('item_sub').disabled = false;
+        el('item_sub_add').disabled = false;
+
+        el('action-add').style.display = 'block';
+        el('action-reset').style.display = 'none';
+        el('action-update').style.display = 'none';
+        el('action-delete').style.display = 'none';
+
+        el('image_container').innerHTML = "Select Image";
+        el('canvas').removeAttribute('src');
+
+        selectedRow = null;
+    }
+
+    async function updateInventory(){
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        var dest = inventory_list[selectedRow].img;
+        if(el('img_path').value !== dest) {
+            var splt_arr = (el('img_path').value).split('.');
+            dest = 'item_img/'+el('barcode').innerHTML+'.'+splt_arr[(splt_arr.length - 1)];
+            var name_arr = (el('img_path').value).split('/');
+            fs.copyFile(el('img_path').value, dest, (err) => {
+                if (err) throw err;
+                console.log(el('img_path').value+' was copied to '+dest);
+            });
+        }
+
+        $query = `UPDATE pos_stock_models SET model_name='${el('item_name').value}', unit_price=${el('item_price').value}, stock_remaining=${el('item_stock').value}, last_updated='${moment().format('YYYY-MM-DD hh:mm:ss')}', img='${el('img_path').value}' WHERE barcode='${el('barcode').innerHTML}'`;
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            fillTable(null);
+            reset();
+            displayNotification('Done!', 'Asset Deleted');
         });
     }
 
@@ -486,8 +568,19 @@
         el('item_name').value = inventory_list[row].model_name;
         el('item_stock').value = inventory_list[row].stock_remaining;
         el('item_price').value = parseFloat(inventory_list[row].unit_price);
+        el('img_path').value = inventory_list[row].img;
         el('last_updated').innerHTML = inventory_list[row].last_updated;
         el('cur_stock').innerHTML = inventory_list[row].stock_remaining;
+
+        el('item_category').disabled = true;
+        el('item_category_add').disabled = true;
+        el('item_sub').disabled = true;
+        el('item_sub_add').disabled = true;
+
+        el('action-add').style.display = 'none';
+        el('action-reset').style.display = 'block';
+        el('action-update').style.display = 'block';
+        el('action-delete').style.display = 'block';
 
         if(inventory_list[row].img !== null){
             try{
@@ -519,6 +612,7 @@
         //     img.src = imgsrc;
         // });
         JsBarcode("#canvas", inventory_list[row].barcode);
+        selectedRow = row;
     }
 
     async function toggleAlert(action){
