@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Reports</title>
+</head>
+
+<body>
+<div class="sales">
+    <div class="sales-header">
+        <div class="title">Reports</div>
+        <div class="end"></div>
+    </div>
+    <div class="sale-container">
+        <div class="sales-left">
+            <div class="summary-card">
+                <div class="summary-card-inner">
+                    <div class="summary-title">Sales summary of the month</div>
+                    <div class="grid-container">
+                        <div class="grid-item">No. of sales</div>
+                        <div class="grid-item" id="sales_no"></div>
+                        <div class="grid-item">Total amount (Rs.)</div>  
+                        <div class="grid-item" id="sales_amount"></div> 
+                        <div class="grid-item">Total discounts (Rs.)</div>  
+                        <div class="grid-item" id="sales_discount"></div> 
+                      </div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-inner">
+                    <div class="summary-title">Repair summary of the month</div>
+                    <div class="grid-container">
+                        <div class="grid-item">No. of paid repairs</div>
+                        <div class="grid-item" id="repair_paid"></div>
+                        <div class="grid-item">No. of non-paid repairs</div>  
+                        <div class="grid-item" id="repair_nonpaid"></div> 
+                        <div class="grid-item">Total gain (Rs.)</div>  
+                        <div class="grid-item" id="repair_gain"></div> 
+                      </div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-inner">
+                    <div class="summary-title">Current stock summary</div>
+                    <div class="grid-container">
+                        <div class="grid-item">Total item count</div>
+                        <div class="grid-item" id="stock_item"></div>
+                        <div class="grid-item">No. of item types</div>  
+                        <div class="grid-item" id="stock_type"></div> 
+                        <div class="grid-item">Stock Value (Rs.)</div>  
+                        <div class="grid-item" id="stock_value"></div> 
+                      </div>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-card-inner">
+                    <div class="summary-title">Cashflow summary of the month</div>
+                    <div class="grid-container">
+                        <div class="grid-item">Total expenditure (Rs.)</div>
+                        <div class="grid-item" id="cash_spend"></div>
+                        <div class="grid-item">Total receivings (Rs.)</div>  
+                        <div class="grid-item" id="cash_receive"></div> 
+                        <div class="grid-item">No. of total cash transactions</div>  
+                        <div class="grid-item" id="cash_count"></div> 
+                      </div>
+                </div>
+            </div>
+        </div>
+        <div class="sales-mid">
+            <br/>
+            <br/>
+            <br/>
+            <div class="summary-title">Recommended refills</div>
+            <div>
+                <table class="summary-table">
+                    <thead>
+                        <th>Barcode</th>
+                        <th>Name</th>
+                        <th>#</th>
+                    </thead>
+                    <tbody id="summary_refills">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="sales-right">
+            <div class="icon-container">
+                <div class="item" onclick="navigate(0)">
+                    <div class="empty">
+                        <i class="material-icons">widgets</i>
+                        STOCK
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(1)">
+                    <div class="empty">
+                        <i class="material-icons">point_of_sale</i>
+                        SALES
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="empty">
+                        <i class="material-icons">construction</i>
+                        REPAIR
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(3)">
+                    <div class="empty">
+                        <i class="material-icons">attach_money</i>
+                        CASH
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(4)">
+                    <div class="selected">
+                        <i class="material-icons">analytics</i>
+                        SUMMARY
+                    </div>
+                    <div class="indicate"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    var mysql = require('mysql');
+    var moment = require('moment');
+    var config = require("./db-config");
+
+    function el(selector) {
+        return document.getElementById(selector);
+    }
+    fetchRefills();
+    async function fetchRefills() {
+        var connection = mysql.createConnection(config.db);
+        connection.connect();
+        
+        $query = `SELECT * FROM pos_stock_models WHERE stock_remaining < 2`;
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            let refills = ``;
+            for(let i = 0; i < rows.length; i++) {
+                refills += `<tr>
+                        <td>${rows[i].barcode}</td>
+                        <td>${rows[i].model_name}</td>
+                        <td>${rows[i].stock_remaining}</td>
+                    </tr>`;
+            }
+            el('summary_refills').innerHTML = refills;
+        });
+    }
+
+    fetchSalesSummary();
+    async function fetchSalesSummary() {
+        var connection = mysql.createConnection(config.db);
+        connection.connect();
+        
+        $query = `SELECT * FROM pos_sales WHERE YEAR(pos_sales.date) = ${moment().format('YYYY')} AND MONTH(pos_sales.date) = ${moment().format('MM')}`;
+        console.log($query);
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            let amount = 0;
+            let discount = 0;
+            for(let i = 0; i < rows.length; i++) {
+                amount += parseFloat(rows[i].net_amount);
+                discount += parseFloat(rows[i].discount);
+            }
+            el('sales_no').innerHTML = rows.length;
+            el('sales_amount').innerHTML = amount;
+            el('sales_discount').innerHTML = discount;
+        });
+    }
+
+    fetchRepairSummary();
+    async function fetchRepairSummary() {
+        var connection = mysql.createConnection(config.db);
+        connection.connect();
+        
+        $query = `SELECT * FROM pos_repairs WHERE YEAR(pos_repairs.date_received) = ${moment().format('YYYY')} AND MONTH(pos_repairs.date_received) = ${moment().format('MM')}`;
+        console.log($query);
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            let paid = 0;
+            let nonpaid = 0;
+            let gain = 0;
+            for(let i = 0; i < rows.length; i++) {
+                if(rows[i].status === 1){
+                    gain += parseFloat(rows[i].amount);
+                    paid++;
+                } else if(rows[i].status === 0){
+                    gain += parseFloat(rows[i].amount);
+                    nonpaid++;
+                }
+            }
+            el('repair_paid').innerHTML = paid;
+            el('repair_nonpaid').innerHTML = nonpaid;
+            el('repair_gain').innerHTML = gain;
+        });
+    }
+
+    fetchStockSummary();
+    async function fetchStockSummary() {
+        var connection = mysql.createConnection(config.db);
+        connection.connect();
+        
+        $query = `SELECT * FROM pos_stock_models`;
+        console.log($query);
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            let count = 0;
+            let amount = 0;
+            for(let i = 0; i < rows.length; i++) {
+                count += parseInt(rows[i].stock_remaining);
+                amount += (count * parseFloat(rows[i].unit_price));
+            }
+            el('stock_item').innerHTML = count;
+            el('stock_type').innerHTML = rows.length;
+            el('stock_value').innerHTML = amount;
+        });
+    }
+
+    fetchCashSummary();
+    async function fetchCashSummary() {
+        var connection = mysql.createConnection(config.db);
+        connection.connect();
+        
+        $query = `SELECT * FROM pos_cashflow WHERE YEAR(pos_cashflow.created) = ${moment().format('YYYY')} AND MONTH(pos_cashflow.created) = ${moment().format('MM')}`;
+        console.log($query);
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            let spend = 0;
+            let receive = 0;
+            for(let i = 0; i < rows.length; i++) {
+                if(rows[i].type === 0) {
+                    spend += parseFloat(rows[i].amount);
+                } else if(rows[i].type === 1) {
+                    receive += parseFloat(rows[i].amount);
+                }
+            }
+            el('cash_spend').innerHTML = spend;
+            el('cash_receive').innerHTML = receive;
+            el('cash_count').innerHTML = rows.length;
+        });
+    }
+    
+    function navigate(pos) {
+        switch(pos) {
+            case 0:
+                window.location.href = "inventory.html"
+                break;
+            case 1:
+                window.location.href = "sales.html"
+                break;
+            case 2:
+                window.location.href = "repair.html";
+                break;
+            case 3:
+                window.location.href = "expenses.html";
+                break;
+            case 4:
+                window.location.href = "reports.html";
+                break;
+            default:
+                break;
+        }
+    }
+</script>
+</html>

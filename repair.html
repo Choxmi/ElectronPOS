@@ -39,7 +39,7 @@
             <div class="bottom">
                 <div class="left">
                     <div class="sale-btns" onclick="openModal(1)"> <i class="material-icons">done</i></div>
-                    <div class="sale-btns"> <i class="material-icons">settings_backup_restore</i></div>
+                    <div class="sale-btns" onclick="openModal(4)"> <i class="material-icons">settings_backup_restore</i></div>
                 </div>
                 <div class="right">
                     <div class="fullline">
@@ -94,7 +94,6 @@
             <br/><br/>
             <div class="actions">
                 <button class="btn" id="action-add">ADD</button>
-                <button class="btn" id="action-delete">DELETE</button>
             </div>
 
         </div>
@@ -125,6 +124,12 @@
                         CASH
                     </div>
                 </div>
+                <div class="item" onclick="navigate(4)">
+                    <div class="empty">
+                        <i class="material-icons">analytics</i>
+                        SUMMARY
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -136,9 +141,10 @@
     let repairLines = [];
     let cat_dropdown = [];
     let receipt = "";
-    let date_created = moment().format('YYYY-MM-DD hh:mm:ss');
+    let date_created = moment().format('YYYY-MM-DD');
     let amount = 0;
     getReceiptId();
+    openModal(4);
     function getReceiptId() {
         var mysql = require('mysql');
         var config = require("./db-config");
@@ -174,6 +180,7 @@
         if(el('task').value === "" || el('deliver_in').value === "" || el('amount').value === "") {
             alert("Please fill the required fields");
         } else {
+            el('confirmation_modal').style.display = 'none';
             console.log("Cat Drop",cat_dropdown,el('repair_type').value);
             repairLines.push({
                 repair_type: cat_dropdown[(el('repair_type').value)-1].type,
@@ -331,7 +338,7 @@
         }
 
         //Print
-        if(type === 2) {
+        if(type === 3) {
             el('confirmation_modal').innerHTML = `
             <div class='modal-content'>
                 <h1 class='modal-title'>Do you want to print this receipt?</h1>
@@ -339,6 +346,33 @@
                 <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
             </div>
             `;
+        }
+
+        //Recall
+        if(type === 4) {
+
+            repairLines = [];
+            refreshTable();
+            receipt = getReceiptId();
+            el('receipt_id').innerHTML = receipt;
+            el('advanced').value = "0";
+            el('total_amount').innerHTML = 'Rs. 0';
+            el('fully_payed').checked = false;
+            el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+            
+            el('confirmation_modal').innerHTML = `
+            <div class='modal-content'>
+                <h1 class='modal-title'>Scan/enter receipt number</h1>
+                <br/>
+                <input class="inputs" style="text-align:center;" type="text" placeholder="Receipt ID" id="receipt_text" />
+                <br/>
+                <div class='actions'><button class='btn' onclick="selectProduct()">Select</button>
+                <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                <br/>
+                <div class="error" id="no_receipt"></div>
+            </div>
+            `;
+            el('receipt_text').focus();
         }
     }
 
@@ -357,7 +391,7 @@
         //status : 0 - Not paid, 1 - paid, 2 - Invalidated
         $query = `INSERT INTO pos_repairs(receipt_id,date_received,items,advanced,amount,date_issued,status) 
         VALUES ('${receipt}','${date_created}','${JSON.stringify(repairLines)}',${el('advanced').value !== null && el('advanced').value !== "" ? el('advanced').value : 0 },${amount},${el('fully_payed').value === true ? "'"+date_created+"'" : null},${el('fully_payed').value === true ? 1 : 0})  
-        ON DUPLICATE KEY UPDATE advanced = ${el('advanced').value == null || el('advanced').value === undefined || el('advanced').value === "" ? 0 : el('advanced').value}, date_issued = '${el('fully_payed').value === true ? moment().format('YYYY-MM-DD') : ""}', status = ${el('fully_payed').value === true ? 1 : 0}`;
+        ON DUPLICATE KEY UPDATE advanced = ${el('advanced').value == null || el('advanced').value === undefined || el('advanced').value === "" ? 0 : el('advanced').value}, date_issued = ${el('fully_payed').checked === true ? "'"+moment().format('YYYY-MM-DD')+"'" : null}, status = ${el('fully_payed').checked === true ? 1 : 0}`;
         console.log("Receipt Query",$query);
         connection.query($query, function (err, rows, fields) {
             if (err) {
@@ -365,13 +399,87 @@
                 console.log(err);
                 return;
             }
+            repairLines=[];
+            refreshTable();
+            getReceiptId();
             openModal(3);
+            repairLines = [];
+            refreshTable();
+            receipt = getReceiptId();
+            el('receipt_id').innerHTML = receipt;
+            el('advanced').value = "0";
+            el('total_amount').innerHTML = 'Rs. 0';
+            el('fully_payed').checked = false;
+            el('date_created').innerHTML = moment().format('YYYY-MM-DD');
         });
     }
 
     function printReceipt() {
         alert("printReceipt");
         el('confirmation_modal').style.display = 'none';
+    }
+
+    function selectProduct() {
+        console.log(el('receipt_text').value);
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = `SELECT * FROM pos_repairs WHERE receipt_id = '${el('receipt_text').value}'`;
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            repairLines=[];
+            if(rows.length > 0) {
+                repairLines = JSON.parse(rows[0].items);
+                refreshTable();
+                receipt = rows[0].receipt_id;
+                el('receipt_id').innerHTML = receipt;
+                el('advanced').value = rows[0].advanced;
+                amount = parseFloat(rows[0].amount);
+                console.log('AMOUNT',amount);
+                el('total_amount').innerHTML = 'Rs. '+rows[0].amount;
+                el('fully_payed').checked = rows[0].status == 0 ? false : true;
+                el('confirmation_modal').style.display = 'none';
+                el('date_created').innerHTML = moment(rows[0].date_received).format('YYYY-MM-DD');
+            } else {
+                el('no_receipt').innerHTML = "No receipt found";
+                repairLines = [];
+                refreshTable();
+                receipt = getReceiptId();
+                el('receipt_id').innerHTML = receipt;
+                el('advanced').value = "0";
+                el('total_amount').innerHTML = 'Rs. 0';
+                el('fully_payed').checked = false;
+                el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+                setTimeout(()=>{
+                    el('no_receipt').innerHTML = "";
+                },5000);
+            }
+        });
+    }
+
+    function refreshTable() {
+        let tbody = '';
+            for(let i = 0; i < repairLines.length; i++) {
+                tbody += `<tr>
+                    <td>`+repairLines[i].repair_type+`</td>
+                    <td>`+repairLines[i].task+`</td>
+                    <td>`+repairLines[i].deliver+`</td>
+                    <td>`+repairLines[i].amount+`</td>
+                </tr>`
+            }
+            el('repair_tbody').innerHTML = tbody;
     }
 
     function navigate(pos) {
@@ -387,6 +495,9 @@
                 break;
             case 3:
                 window.location.href = "expenses.html";
+                break;
+            case 4:
+                window.location.href = "reports.html";
                 break;
             default:
                 break;
