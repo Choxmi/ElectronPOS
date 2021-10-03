@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Sales</title>
+</head>
+
+<body>
+<div class="full-alert" id="alert">
+    <div class="alert-content">
+        <div class="alert-close" onclick="toggleAlert(0)">X</div>
+        <div class="alert-body" id="alert-body">
+            
+        </div>
+    </div>
+</div>
+<div class="sales">
+    <div class="sales-header">
+        <div class="title">Sales</div>
+        <div class="end"></div>
+    </div>
+    <div class="sale-container">
+        <div class="sales-left">
+            <div class="item-container">
+                <div id="confirmation_modal" class="confirmation_modal"></div>
+                <table>
+                    <thead>
+                        <th>ITEM CODE</th>
+                        <th>ITEM</th>
+                        <th>QUANTITY</th>
+                        <th>UNIT PRICE</th>
+                        <th>TOTAL</th>
+                    </thead>
+                    <tbody id="sale_tbl">
+                    </tbody>
+                </table>
+            </div>
+            <div class="bottom">
+                <div class="left">
+                    <div class="sale-btns" onclick="openModal(1)"> <i class="material-icons">done</i></div>
+                    <!-- <div class="sale-btns"> <i class="material-icons">save</i></div> -->
+                    <div class="half-button-container">
+                        <div class="sale-btns" onclick="resetFields()"> <i class="material-icons">loop</i></div>
+                        <div class="sale-btns" onclick="openModal(2)"> <i class="material-icons">qr_code_scanner</i></div>
+                    </div>
+                </div>
+                <div class="right">
+                    <div class="halfline">
+                        <div class="top-left">ITEMS</div>
+                        <div class="top-right" id="itm_count">0</div>
+                        <div class="top-left">SUBTOTAL</div>
+                        <div class="top-right" id="itm_total">Rs. 0</div>
+                    </div>
+                    <div class="halfline">
+                        <div class="top-left">DISCOUNTS</div>
+                        <div class="top-right inline">
+                            Rs. <input type="number" id="itm_discount"/>
+                        </div>
+                        <div class="top-left">PAYMENTS</div>
+                        <div class="top-right inline">
+                            Rs. <input type="number" id="itm_payment"/>
+                        </div>
+                    </div>
+                    <div class="halfline">
+                        <div class="top-left"></div>
+                        <div class="top-right"></div>
+                        <div class="top-left">BALANCE</div>
+                        <div class="top-right" id="itm_balance">Rs. 0</div>
+                    </div>
+                    <div class="fullline">
+                        <div class="bottom-left label">AMOUNT DUE</div>
+                        <div class="bottom-right total" id="itm_due_amount">Rs. 0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sales-mid" id="sale_inputs">
+            <div class="field">
+                <label>Item Name</label>
+                <input type="text" placeholder="Item Name" value="" id="item_name" />
+            </div>
+            <div class="field">
+                <label>Item Code</label>
+                <input type="text" placeholder="Item Code" onfocus="focusInput(1)" value="" id="item_code" />
+            </div>
+            <div class="field">
+                <label>Quantity</label>
+                <input type="number" placeholder="Quantity" onfocus="focusInput(2)" value="" id="quantity" />
+            </div>
+            <table class="cal">
+                <tr>
+                    <td><button onclick="typeChar('7')">7</button></td>
+                    <td><button onclick="typeChar('8')">8</button></td>
+                    <td><button onclick="typeChar('9')">9</button></td>
+                </tr>
+                <tr>
+                    <td><button onclick="typeChar('4')">4</button></td>
+                    <td><button onclick="typeChar('5')">5</button></td>
+                    <td><button onclick="typeChar('6')">6</button></td>
+                </tr>
+                <tr>
+                    <td><button onclick="typeChar('1')">1</button></td>
+                    <td><button onclick="typeChar('2')">2</button></td>
+                    <td><button onclick="typeChar('3')">3</button></td>
+                </tr>
+                <tr>
+                    <td><button onclick="typeChar('0')">0</button></td>
+                    <td><button onclick="typeChar('S')">S</button></td>
+                    <td><button onclick="typeChar('done')" class="return"><i class="material-icons">keyboard_return</i></button></td>
+                </tr>
+            </table>
+            <h2>Quick View</h2>
+            <div id="quickview" class="quickview-container">
+            </div>
+        </div>
+        <div class="sales-right">
+            <div class="icon-container">
+                <div class="item" onclick="navigate(0)">
+                    <div class="empty">
+                        <i class="material-icons">widgets</i>
+                        STOCK
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(1)">
+                    <div class="selected">
+                        <i class="material-icons">point_of_sale</i>
+                        SALES
+                    </div>
+                    <div class="indicate"></div>
+                </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="empty">
+                        <i class="material-icons">construction</i>
+                        REPAIR
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(3)">
+                    <div class="empty">
+                        <i class="material-icons">attach_money</i>
+                        CASH
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(4)">
+                    <div class="empty">
+                        <i class="material-icons">analytics</i>
+                        SUMMARY
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    var mysql = require('mysql');
+    var remote = require('electron').remote;
+    var fs = remote.require('fs');
+    var active_input = null;
+    var selected_item = null;
+    var current_sale = [];
+    var item_count = 0;
+    var sub_total = 0;
+    let net_total = 0;
+    var discounts = 0;
+    var payments = 0;
+    var balance = 0;
+    var due = 0;
+    let receipt_id = null;
+
+    let existing = false;
+
+    function el(selector) {
+        return document.getElementById(selector);
+    }
+
+    // el('action-btn').addEventListener('click', function () {
+    //     // Get the mysql service
+    //     getFirstTenRows(function (rows) {
+    //         var html = '';
+
+    //         rows.forEach(function (row) {
+    //             html += '<tr>';
+    //             html += '<td>';
+    //             html += row.id;
+    //             html += '</td>';
+    //             html += '<td>';
+    //             html += row.display_name;
+    //             html += '</td>';
+    //             html += '<td>';
+    //             html += row.city;
+    //             html += '</td>';
+    //             html += '</tr>';
+    //             console.log(row);
+    //         });
+
+    //         document.querySelector('#table > tbody').innerHTML = html;
+    //         document.querySelector('#table > thead').innerHTML = '<tr><th scope="col">ID</th> <th scope="col">Name</th> <th scope="col">Location</th> </tr>';
+    //         document.querySelector('#table > tfoot').innerHTML = '<tr><td colspan="3">Last joined 10 users are listed here.</td> </tr>';
+
+    //     });
+    // }, false);
+
+    function displayQuickView(code) {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        
+        $query = 'SELECT model_name, unit_price, img, stock_remaining, barcode FROM pos_stock_models WHERE barcode = "'+code+'" LIMIT 1';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            console.log("Query",$query,"Result",rows);
+            
+            var quickview = "";
+            if(rows.length === 0) {
+                quickview = '<h3>No Item found for this code.</h3>';
+                active_input.focus();
+                selected_item = null;
+            } else {
+                el('item_name').value = rows[0].model_name;
+                quickview = '<div class="quick-container">'+
+                '<div class="quick-topic">Model Name</div>'+
+                '<div class="quick-value">'+rows[0].model_name+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Stock Remaining</div>'+
+                '<div class="quick-value">'+rows[0].stock_remaining+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Unit Price</div>'+
+                '<div class="quick-value">'+rows[0].unit_price+'</div>'+
+                '</div>';
+                try{
+                    var _img = fs.readFileSync(rows[0].img).toString('base64');
+                    quickview+='<img class="quick-img" src="data:image/png;base64,' + _img + '" />';
+                } catch(e) {
+                    console.log("No image. Dismissed");
+                }
+                selected_item = rows[0];
+                el('quantity').focus();
+            }
+            el('quickview').innerHTML = quickview;
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    function focusInput(type) {
+        if(type === 1) {
+            active_input = el('item_code');
+        } else if(type === 2) {
+            active_input = el('quantity');
+        }
+    }
+
+    function toggleAlert(action){
+        if(action === 0){
+            el('alert').style.display = "none";
+        } else {
+            var alert_content = "";
+            if(action === 1){
+                alert_content = `<h1>PRINT RECEIPT</h1>
+                <label>Bill is about to be saved and printed. Want to continue?</label>
+                <button class="alert-submit" onclick="saveReceipt()">Print</button>`;
+            } else if(action === 2){
+                alert_content = `<h1>ADD SUB CATEGORY</h1>
+                <label>Bill is about to be saved and printed. Want to continue?</label>
+                <button class="alert-submit" onclick="printReceipt()">Print</button>`;
+            }   
+            el('alert-body').innerHTML = alert_content;                               
+            el('alert').style.display = "block"
+        }                                              
+    }
+
+    function saveReceipt() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        console.log("Saving Sale");
+        discounts = el("itm_discount").value;
+        let resDate = new Date();
+        let dateStr = resDate.getFullYear()+"-"+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+"-"+resDate.getDate();
+        $query = 'SELECT COUNT(receipt_id) AS total FROM pos_sales WHERE date = "'+dateStr+'"';
+        console.log("Getting Query",$query);
+        connection.query($query, function (err, rows, fields) {
+            if(err) {
+                console.log("Error occured",err);
+                return;
+            }
+            let seq = rows[0].total + 1;
+            receipt_id = "P"+resDate.getFullYear()+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+resDate.getDate()+seq;
+            $query1 = "INSERT INTO pos_sales(receipt_id,sales_lines,net_amount,discount,timestamp,date) VALUES('"+receipt_id+"','"+JSON.stringify(current_sale)+"',"+net_total+","+(discounts !== null || discounts !== undefined ? 0 : discounts)+","+resDate.getTime()+",'"+dateStr+"')";
+            console.log("QUERY 1",$query1);
+            connection.query($query1, function(error, rs){
+                if(error){
+                    console.log("Error inserting",error);
+                    return;
+                }
+                updateStock();
+                openModal(3);
+            })
+        });
+        // printReceipt();
+    }
+
+    async function updateStock() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+        console.log("Update Stock",current_sale);
+        for(let i = 0; i < current_sale.length; i++) {
+            let $query = `UPDATE pos_stock_models SET stock_remaining = stock_remaining - ${current_sale[i].quantity} WHERE barcode = '${current_sale[i].barcode}'`;
+            console.log("QUERY",$query);
+            await connection.query($query);
+        }
+    }
+
+    function typeChar(chr) {
+        if(chr !== "done") {
+            active_input.value+=chr;
+            active_input.focus();
+        } else {
+            if(active_input === el('item_code')){
+                displayQuickView(el('item_code').value);
+            } else if(active_input === el('quantity')) {
+                if(selected_item !== null) {
+                    if(selected_item.stock_remaining >= parseInt(el('quantity').value)) {
+                        var index = current_sale.findIndex(item => item.barcode === el('item_code').value);
+                        console.log("INDEX",index);
+                        
+                        if(index !== -1) {
+                            if((current_sale[index].quantity + parseInt(el('quantity').value)) > selected_item.stock_remaining){
+                                alert("Not enough quantity available");
+                                return;
+                            } else {
+                                current_sale[index].quantity += parseInt(el('quantity').value);
+                                el('quantity').value = current_sale[index].quantity;
+                                current_sale[index].total = current_sale[index].quantity * parseFloat(selected_item.unit_price);
+                            }
+                        } else {
+                            current_sale.push({
+                                barcode: selected_item.barcode,
+                                quantity: parseInt(el('quantity').value),
+                                name: selected_item.model_name,
+                                unit_price: selected_item.unit_price,
+                                total: (parseInt(el('quantity').value) * parseFloat(selected_item.unit_price)),
+                            });
+                        }
+                        refreshTable();
+                    } else {
+                        alert("Sorry not enough quantity available.");
+                        el('quantity').focus();
+                    }
+                } else {
+                    alert("No Stock");
+                }
+            } else {
+                active_input.focus();
+            }
+        }
+    }
+
+    function refreshTable() {
+        var tbl_content = "";
+        item_count = 0;
+        sub_total = 0;
+        for(var i = 0; i < current_sale.length; i++){
+            tbl_content+='<tr>';
+            tbl_content+='<td>'+current_sale[i].barcode+'</td>';
+            tbl_content+='<td>'+current_sale[i].name+'</td>';
+            tbl_content+='<td>'+current_sale[i].quantity+'</td>';
+            tbl_content+='<td>'+current_sale[i].unit_price+'</td>';
+            tbl_content+='<td>'+current_sale[i].total+'</td>';
+            tbl_content+='</tr>';
+
+            item_count+=current_sale[i].quantity;
+            sub_total+=current_sale[i].total;
+        }
+
+        net_total = sub_total - el('itm_discount').value;
+
+        el('sale_tbl').innerHTML = tbl_content;
+        el('item_code').value = "";
+        el('item_name').value = "";
+        el('quantity').value = "";
+        el('quickview').innerHTML = "";
+        el('itm_count').innerHTML = item_count;
+        el('itm_total').innerHTML = 'Rs. ' + sub_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        // el('itm_discount').value = '';
+        // el('itm_payment').value = '';
+        el('itm_balance').innerHTML = 'Rs. ' + (el('itm_payment').value - net_total);
+        el('itm_due_amount').innerHTML = 'Rs. ' + net_total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        el('item_code').focus();
+    }
+
+    async function printReceipt() {
+        const response = await fetch(
+            "http://localhost:8900/printSalesReceipt/",
+            {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    receipt_id: receipt_id,
+                    data: current_sale,
+                    total: net_total,
+                    paid: el('itm_payment').value,
+                    balance: (el('itm_payment').value - net_total),
+                    discount: (el('itm_discount').value === null || el('itm_discount').value === "")? "0" : el('itm_discount').value
+                })
+            }
+        );
+        resetFields();
+        el('confirmation_modal').style.display = 'none';
+    }
+
+    function navigate(pos) {
+        switch(pos) {
+            case 0:
+                window.location.href = "inventory.html"
+                break;
+            case 1:
+                window.location.href = "sales.html"
+                break;
+            case 2:
+                window.location.href = "repair.html";
+                break;
+            case 3:
+                window.location.href = "expenses.html";
+                break;
+            case 4:
+                window.location.href = "reports.html";
+                break;
+            default:
+                break;
+        }
+    }
+
+    function checkName(name) {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        
+        $query = 'SELECT model_name, unit_price, img, stock_remaining, barcode FROM pos_stock_models WHERE model_name = "'+name+'" LIMIT 1';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+
+            console.log("Query",$query,"Result",rows);
+            
+            var quickview = "";
+            if(rows.length === 0) {
+                quickview = '<h3>No Item found for this code.</h3>';
+                active_input.focus();
+                selected_item = null;
+            } else {
+                el('item_code').value = rows[0].barcode;
+                quickview = '<div class="quick-container">'+
+                '<div class="quick-topic">Model Name</div>'+
+                '<div class="quick-value">'+rows[0].model_name+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Stock Remaining</div>'+
+                '<div class="quick-value">'+rows[0].stock_remaining+'</div>'+
+                '</div><div class="quick-container">'+
+                '<div class="quick-topic">Unit Price</div>'+
+                '<div class="quick-value">'+rows[0].unit_price+'</div>'+
+                '</div>';
+                var _img = fs.readFileSync(rows[0].img).toString('base64');
+                quickview+='<img class="quick-img" src="data:image/png;base64,' + _img + '" />';
+                selected_item = rows[0];
+                el('quantity').focus();
+            }
+            el('quickview').innerHTML = quickview;
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    el('item_code').focus();
+
+    el('item_code').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            displayQuickView(el('item_code').value);
+        }
+    });
+
+    el('item_name').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            checkName(el('item_name').value);
+        }
+    });
+
+    el('itm_discount').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            refreshTable();
+        }
+    });
+
+    el('itm_payment').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 9 ) {
+            refreshTable();
+        }
+    });
+
+    el('quantity').addEventListener("keydown", (e)=>{
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        if (charCode == 13 ) {
+            if(el('item_code').value !== null && el('item_code').value !== "") {
+                typeChar('done');
+            }
+        }
+    });
+
+    function resetFields() {
+        current_sale = [];
+        net_total = 0;
+        el("itm_discount").value = "";
+        el("itm_payment").value = "";
+        refreshTable();
+        el('sale_inputs').style.opacity = 1;
+        el('confirmation_modal').style.display = "none";
+        existing = false;
+    }
+
+    function openModal(type) {
+        el('confirmation_modal').style.display = "flex";
+        // Save receipt 
+        if(type === 1) {
+            if(current_sale.length > 0 && !existing) {
+                el('confirmation_modal').innerHTML = `
+                    <div class='modal-content'>
+                        <h1 class='modal-title'>Do you want to save this receipt?</h1>
+                        <div class='actions'><button class='btn' onclick="saveReceipt()">Yes</button>
+                        <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                    </div>
+                    `;
+            } else {
+                el('confirmation_modal').innerHTML = `
+                    <div class='modal-content'>
+                        <h1 class='modal-title'>Do you want to print this receipt?</h1>
+                        <div class='actions'><button class='btn' onclick="printReceipt()">Yes</button>
+                        <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; resetFields(); return false;})();return false;">Dismiss</button></div>
+                    </div>
+                    `;
+            }
+        }
+
+        if(type === 2) {
+            el('confirmation_modal').innerHTML = `
+                <div class='modal-content'>
+                    <h1 class='modal-title'>Scan/enter bill number</h1>
+                    <br/>
+                    <input class="inputs" style="text-align:center;" type="text" placeholder="Bill ID" id="receipt_text" />
+                    <br/>
+                    <div class='actions'><button class='btn' onclick="retrieveBill()">Select</button>
+                    <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                    <br/>
+                    <div class="error" id="no_receipt"></div>
+                </div>
+                `;
+            el('receipt_text').focus();
+        }
+
+        if(type === 3) {
+            el('confirmation_modal').innerHTML = `
+                <div class='modal-content'>
+                    <h1 class='modal-title'>Do you want to print this receipt?</h1>
+                    <div class='actions'><button class='btn' onclick="printReceipt()">Yes</button>
+                    <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; resetFields(); return false;})();return false;">Dismiss</button></div>
+                </div>
+                `;
+        }
+    }
+
+    function retrieveBill() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = `SELECT * FROM pos_sales WHERE receipt_id = '${el('receipt_text').value}'`;
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            if(rows.length > 0) {
+                existing = true;
+                current_sale = JSON.parse(rows[0].sales_lines);
+                console.log("ROWS",current_sale);
+                refreshTable();
+                el('sale_inputs').style.opacity = 0;
+                el('confirmation_modal').style.display = "none";
+            } else {
+                el('no_receipt').innerHTML = "No receipt found";
+                existing = false;
+                setTimeout(()=>{
+                    el('no_receipt').innerHTML = "";
+                },5000);
+                el('sale_inputs').style.opacity = 1;
+            }
+        });
+    }
+
+    document.onkeydown = function(evt) {
+        var e = event || evt;
+        var charCode = e.which || e.keyCode;
+        
+        // Tab Key
+        if (charCode == 192 ) {
+            el('itm_discount').focus();
+        }
+
+        // Escape key
+        if (charCode == 27 ) {
+            el('itm_payment').focus();
+        }
+    };
+
+</script>
+</html>

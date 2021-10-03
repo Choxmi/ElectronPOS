@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Repair</title>
+</head>
+
+<body>
+<div class="full-alert" id="alert">
+    <div class="alert-content">
+        <div class="alert-close" onclick="toggleAlert(0)">X</div>
+        <div class="alert-body" id="alert-body">
+            
+        </div>
+    </div>
+</div>
+<div class="sales">
+    <div class="sales-header">
+        <div class="title">Repair</div>
+        <div class="end"></div>
+    </div>
+    <div class="sale-container">
+        <div class="sales-left">
+            <div class="item-container">
+                <div id="confirmation_modal" class="confirmation_modal"></div>
+                <table>
+                    <thead>
+                        <th>REPAIR TYPE</th>
+                        <th>TASK</th>
+                        <th>DELIVER ON</th>
+                        <th>AMOUNT</th>
+                    </thead>
+                    <tbody id="repair_tbody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="bottom">
+                <div class="left">
+                    <div class="sale-btns" onclick="openModal(1)"> <i class="material-icons">done</i></div>
+                    <div class="sale-btns" onclick="openModal(4)"> <i class="material-icons">settings_backup_restore</i></div>
+                </div>
+                <div class="right">
+                    <div class="fullline">
+                        <div class="bottom-left label">TOTAL AMOUNT</div>
+                        <div class="bottom-right total" id="total_amount">Rs. 0</div>
+                    </div>
+                    <div class="fullline">
+                        <div class="bottom-left label">ADVANCED PAYMENT (Rs.)</div>
+                        <div class="bottom-right total"><input class="inputs" type="number" placeholder="Advanced Payment" id="advanced" /></div>
+                    </div>
+                    <div class="fullline">
+                        <div class="bottom-left label">FULLY PAID</div>
+                        <div class="bottom-right total">
+                          <label class="container">
+                            <input type="checkbox" id="fully_payed">
+                            <span class="checkmark"></span>
+                          </label>
+                        </div>
+                    </div>
+                    <br/>
+                    <br/>
+                    <div class="halfline">
+                        <div class="top-left">RECEIPT NO</div>
+                        <div class="top-right" id="receipt_id"></div>
+                        <div class="top-left">DATE CREATED</div>
+                        <div class="top-right" id="date_created"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sales-mid">
+            <div class="field">
+                <label>Repair Type</label>
+                <div class="drop_with_add">
+                    <select id="repair_type">
+                    </select>
+                    <button onclick="toggleAlert(1)">+</button>
+                </div>
+            </div>
+            <div class="field">
+                <label>Task</label>
+                <input type="text" placeholder="Task" value="" id="task" />
+            </div>
+            <div class="field">
+                <label>Deliver In (Days)</label>
+                <input type="number" placeholder="Deliver In" value="" id="deliver_in" />
+            </div>
+            <div class="field">
+                <label>Amount</label>
+                <input type="number" placeholder="Amount" value="" id="amount" />
+            </div>
+            <br/><br/>
+            <div class="actions">
+                <button class="btn" id="action-add">ADD</button>
+            </div>
+            <br/><br/>
+            <br/><br/>
+            <br/><br/>
+            <br/><br/>
+            <br/><br/>
+            <div class="field">
+                <label>Contact No.</label>
+                <input type="number" placeholder="ContactNo." value="" id="contact" />
+            </div>
+
+        </div>
+        <div class="sales-right">
+            <div class="icon-container">
+                <div class="item" onclick="navigate(0)">
+                    <div class="empty">
+                        <i class="material-icons">widgets</i>
+                        STOCK
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(1)">
+                    <div class="empty">
+                        <i class="material-icons">point_of_sale</i>
+                        SALES
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="selected">
+                        <i class="material-icons">construction</i>
+                        REPAIR
+                    </div>
+                    <div class="indicate"></div>
+                </div>
+                <div class="item" onclick="navigate(3)">
+                    <div class="empty">
+                        <i class="material-icons">attach_money</i>
+                        CASH
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(4)">
+                    <div class="empty">
+                        <i class="material-icons">analytics</i>
+                        SUMMARY
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    var mysql = require('mysql');
+    var moment = require('moment');
+    let repairLines = [];
+    let cat_dropdown = [];
+    let receipt = "";
+    let date_created = moment().format('YYYY-MM-DD');
+    let amount = 0;
+    getReceiptId();
+    openModal(4);
+    function getReceiptId() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT COUNT(receipt_id) AS id FROM pos_repairs';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            receipt = "R"+String((rows[0].id) + 1).padStart(6, '0');
+            el('receipt_id').innerHTML = receipt;
+        });
+    }
+
+    function el(selector) {
+        return document.getElementById(selector);
+    }
+
+    el('date_created').innerHTML = date_created;
+
+    el('action-add').addEventListener('click', function () {
+        if(el('task').value === "" || el('deliver_in').value === "" || el('amount').value === "") {
+            alert("Please fill the required fields");
+        } else {
+            el('confirmation_modal').style.display = 'none';
+            console.log("Cat Drop",cat_dropdown,el('repair_type').value);
+            repairLines.push({
+                repair_type: cat_dropdown[(el('repair_type').value)-1].type,
+                repair_type_id: el('repair_type').value,
+                task: el('task').value,
+                deliver: moment(date_created, "YYYY-MM-DD hh:mm:ss").add(el('deliver_in').value, 'days').format('YYYY-MM-DD'),
+                amount: el('amount').value
+            });
+
+            amount += parseFloat(el('amount').value);
+
+            el('total_amount').innerHTML = "Rs. "+amount;
+
+            el('task').value = '';
+            el('deliver_in').value = '';
+            el('amount').value = '';
+
+            el('repair_tbody').innerHTML = '';
+            let tbody = '';
+            for(let i = 0; i < repairLines.length; i++) {
+                tbody += `<tr>
+                    <td>`+repairLines[i].repair_type+`</td>
+                    <td>`+repairLines[i].task+`</td>
+                    <td>`+repairLines[i].deliver+`</td>
+                    <td>`+repairLines[i].amount+`</td>
+                </tr>`
+            }
+            el('repair_tbody').innerHTML = tbody;
+        }
+    }, false);
+
+    function toggleAlert(action){
+        if(action === 0){
+            el('alert').style.display = "none";
+        } else {
+            var alert_content = "";
+            if(action === 1){
+                alert_content = `<h1>ADD REPAIR TYPE</h1>
+                <label>Reapir Type</label>
+                <input type="text" placeholder="Repair Type" id="repair_type_new" />
+                <button class="alert-submit" onclick="addRepairType()">SUBMIT</button>`;
+            } else if(action === 2){
+                alert_content = `<h1>ADD SUB CATEGORY</h1>
+                <label>Category</label>
+                <input type="hidden" value="`+el('item_category').options[el('item_category').selectedIndex].value+`" />
+                <input type="text" value="`+el('item_category').options[el('item_category').selectedIndex].innerHTML+`" disabled />
+                <label>Sub Category</label>
+                <input type="text" placeholder="Subcategory" id="modal_sub_cat_name" />
+                <button class="alert-submit" onclick="triggerAddSubCategory(`+el('item_category').options[el('item_category').selectedIndex].value+`)">SUBMIT</button>`;
+            }   
+            el('alert-body').innerHTML = alert_content;                               
+            el('alert').style.display = "block"
+        }
+    }
+
+    function getDropdowns() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'SELECT * FROM pos_repair_types';
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            cat_dropdown = rows;
+            
+            var typeOptions = "";
+            for(var i = 0; i < rows.length; i++){
+                typeOptions+='<option value='+rows[i].type_id+'>'+rows[i].type+'</option>';
+            }
+            el('repair_type').innerHTML =  typeOptions;
+        });
+
+        connection.end(function () {
+        });
+    }
+
+    getDropdowns();
+
+    function addRepairType() {
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = 'INSERT INTO pos_repair_types(type) VALUES ("' + el('repair_type_new').value + '");';
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error occurred performing the query.");
+                console.log(err);
+                return;
+            }
+            displayNotification('Done!', 'Type added');
+            getDropdowns();
+            toggleAlert(0);
+        });
+    }
+
+    function displayNotification(titleValue, notificationValue){
+        const notification = {
+            title: titleValue,
+            body: notificationValue
+        }
+
+        const myNotification = new window.Notification(notification.title, notification)
+    }
+
+    function openModal(type) {
+        el('confirmation_modal').style.display = "flex";
+        // Save receipt 
+        if(type === 1) {
+            if(repairLines.length > 0) {
+                el('confirmation_modal').innerHTML = `
+                <div class='modal-content'>
+                    <h1 class='modal-title'>Do you want to save this receipt?</h1>
+                    <div class='actions'><button class='btn' onclick="saveReceipt()">Yes</button>
+                    <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                </div>
+                `;
+            } else { 
+                el('confirmation_modal').innerHTML = `
+                <div class='modal-content'>
+                    <h1 class='modal-title'>At leaset one repair item required</h1>
+                    <div class='actions'><button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                </div>
+                `;
+            }
+        }
+        
+        //Loading
+        if(type === 2) {
+            el('confirmation_modal').innerHTML = `
+            <div class='modal-content'>
+                <h1 class='modal-title'>Loading</h1>
+                <img src="./assets/icons/spinner.gif"/>
+            </div>
+            `;
+        }
+
+        //Print
+        if(type === 3) {
+            el('confirmation_modal').innerHTML = `
+            <div class='modal-content'>
+                <h1 class='modal-title'>Do you want to print this receipt?</h1>
+                <div class='actions'><button class='btn' onclick="printReceipt()">Yes</button>
+                <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+            </div>
+            `;
+        }
+
+        //Recall
+        if(type === 4) {
+
+            repairLines = [];
+            refreshTable();
+            receipt = getReceiptId();
+            el('receipt_id').innerHTML = receipt;
+            el('advanced').value = "0";
+            el('total_amount').innerHTML = 'Rs. 0';
+            el('fully_payed').checked = false;
+            el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+            el('contact').value = "";
+            
+            el('confirmation_modal').innerHTML = `
+            <div class='modal-content'>
+                <h1 class='modal-title'>Scan/enter receipt number</h1>
+                <br/>
+                <input class="inputs" style="text-align:center;" type="text" placeholder="Receipt ID" id="receipt_text" />
+                <br/>
+                <div class='actions'><button class='btn' onclick="selectProduct()">Select</button>
+                <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                <br/>
+                <div class="error" id="no_receipt"></div>
+            </div>
+            `;
+            el('receipt_text').focus();
+        }
+    }
+
+    const saveReceipt = () => {
+        openModal(2);
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        //status : 0 - Not paid, 1 - paid, 2 - Invalidated
+        $query = `INSERT INTO pos_repairs(receipt_id,date_received,contact,items,advanced,amount,date_issued,status) 
+        VALUES ('${receipt}','${date_created}',${el('contact').value !== null && el('contact').value !== "" ? el('contact').value : null},'${JSON.stringify(repairLines)}',${el('advanced').value !== null && el('advanced').value !== "" ? el('advanced').value : 0 },${amount},${el('fully_payed').value === true ? "'"+date_created+"'" : null},${el('fully_payed').value === true ? 1 : 0})  
+        ON DUPLICATE KEY UPDATE advanced = ${el('advanced').value == null || el('advanced').value === undefined || el('advanced').value === "" ? 0 : el('advanced').value}, date_issued = ${el('fully_payed').checked === true ? "'"+moment().format('YYYY-MM-DD')+"'" : null}, status = ${el('fully_payed').checked === true ? 1 : 0}`;
+        console.log("Receipt Query",$query);
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+        });
+        openModal(3);
+    }
+
+    function resetFields() {
+        repairLines = [];
+        refreshTable();
+        receipt = getReceiptId();
+        el('receipt_id').innerHTML = receipt;
+        el('advanced').value = "0";
+        el('total_amount').innerHTML = 'Rs. 0';
+        el('fully_payed').checked = false;
+        el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+        el('contact').value = "";
+    }
+
+    async function printReceipt() {
+        const response = await fetch(
+            "http://localhost:8900/printRepairReceipt/",
+            {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    receipt_id: receipt,
+                    data: repairLines,
+                    total: amount,
+                    contact: el('contact').value,
+                    advanced: el('advanced').value,
+                    payment: el('fully_payed').checked === true ? 'Full' : (el('advanced').value !== "") ? 'None' : 'Partial'
+                })
+            }
+        );
+        // el('confirmation_modal').style.display = 'none';
+    }
+
+    function selectProduct() {
+        console.log(el('receipt_text').value);
+        var mysql = require('mysql');
+        var config = require("./db-config");
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+
+        $query = `SELECT * FROM pos_repairs WHERE receipt_id = '${el('receipt_text').value}'`;
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            repairLines=[];
+            if(rows.length > 0) {
+                repairLines = JSON.parse(rows[0].items);
+                refreshTable();
+                receipt = rows[0].receipt_id;
+                el('receipt_id').innerHTML = receipt;
+                el('advanced').value = rows[0].advanced;
+                amount = parseFloat(rows[0].amount);
+                console.log('AMOUNT',amount);
+                el('total_amount').innerHTML = 'Rs. '+rows[0].amount;
+                el('fully_payed').checked = rows[0].status == 0 ? false : true;
+                el('confirmation_modal').style.display = 'none';
+                el('date_created').innerHTML = moment(rows[0].date_received).format('YYYY-MM-DD');
+                el('contact').value = rows[0].contact;
+            } else {
+                el('no_receipt').innerHTML = "No receipt found";
+                repairLines = [];
+                refreshTable();
+                receipt = getReceiptId();
+                el('receipt_id').innerHTML = receipt;
+                el('advanced').value = "0";
+                el('total_amount').innerHTML = 'Rs. 0';
+                el('fully_payed').checked = false;
+                el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+                el('contact').value = "";
+                setTimeout(()=>{
+                    el('no_receipt').innerHTML = "";
+                },5000);
+            }
+        });
+    }
+
+    function refreshTable() {
+        let tbody = '';
+            for(let i = 0; i < repairLines.length; i++) {
+                tbody += `<tr>
+                    <td>`+repairLines[i].repair_type+`</td>
+                    <td>`+repairLines[i].task+`</td>
+                    <td>`+repairLines[i].deliver+`</td>
+                    <td>`+repairLines[i].amount+`</td>
+                </tr>`
+            }
+            el('repair_tbody').innerHTML = tbody;
+    }
+
+    function navigate(pos) {
+        switch(pos) {
+            case 0:
+                window.location.href = "inventory.html"
+                break;
+            case 1:
+                window.location.href = "sales.html"
+                break;
+            case 2:
+                window.location.href = "repair.html";
+                break;
+            case 3:
+                window.location.href = "expenses.html";
+                break;
+            case 4:
+                window.location.href = "reports.html";
+                break;
+            default:
+                break;
+        }
+    }
+</script>
+</html>

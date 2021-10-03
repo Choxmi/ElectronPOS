@@ -95,6 +95,15 @@
             <div class="actions">
                 <button class="btn" id="action-add">ADD</button>
             </div>
+            <br/><br/>
+            <br/><br/>
+            <br/><br/>
+            <br/><br/>
+            <br/><br/>
+            <div class="field">
+                <label>Contact No.</label>
+                <input type="number" placeholder="ContactNo." value="" id="contact" />
+            </div>
 
         </div>
         <div class="sales-right">
@@ -359,6 +368,7 @@
             el('total_amount').innerHTML = 'Rs. 0';
             el('fully_payed').checked = false;
             el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+            el('contact').value = "";
             
             el('confirmation_modal').innerHTML = `
             <div class='modal-content'>
@@ -389,8 +399,8 @@
             }
         });
         //status : 0 - Not paid, 1 - paid, 2 - Invalidated
-        $query = `INSERT INTO pos_repairs(receipt_id,date_received,items,advanced,amount,date_issued,status) 
-        VALUES ('${receipt}','${date_created}','${JSON.stringify(repairLines)}',${el('advanced').value !== null && el('advanced').value !== "" ? el('advanced').value : 0 },${amount},${el('fully_payed').value === true ? "'"+date_created+"'" : null},${el('fully_payed').value === true ? 1 : 0})  
+        $query = `INSERT INTO pos_repairs(receipt_id,date_received,contact,items,advanced,amount,date_issued,status) 
+        VALUES ('${receipt}','${date_created}',${el('contact').value !== null && el('contact').value !== "" ? el('contact').value : null},'${JSON.stringify(repairLines)}',${el('advanced').value !== null && el('advanced').value !== "" ? el('advanced').value : 0 },${amount},${el('fully_payed').value === true ? "'"+date_created+"'" : null},${el('fully_payed').value === true ? 1 : 0})  
         ON DUPLICATE KEY UPDATE advanced = ${el('advanced').value == null || el('advanced').value === undefined || el('advanced').value === "" ? 0 : el('advanced').value}, date_issued = ${el('fully_payed').checked === true ? "'"+moment().format('YYYY-MM-DD')+"'" : null}, status = ${el('fully_payed').checked === true ? 1 : 0}`;
         console.log("Receipt Query",$query);
         connection.query($query, function (err, rows, fields) {
@@ -399,24 +409,41 @@
                 console.log(err);
                 return;
             }
-            repairLines=[];
-            refreshTable();
-            getReceiptId();
-            openModal(3);
-            repairLines = [];
-            refreshTable();
-            receipt = getReceiptId();
-            el('receipt_id').innerHTML = receipt;
-            el('advanced').value = "0";
-            el('total_amount').innerHTML = 'Rs. 0';
-            el('fully_payed').checked = false;
-            el('date_created').innerHTML = moment().format('YYYY-MM-DD');
         });
+        openModal(3);
     }
 
-    function printReceipt() {
-        alert("printReceipt");
-        el('confirmation_modal').style.display = 'none';
+    function resetFields() {
+        repairLines = [];
+        refreshTable();
+        receipt = getReceiptId();
+        el('receipt_id').innerHTML = receipt;
+        el('advanced').value = "0";
+        el('total_amount').innerHTML = 'Rs. 0';
+        el('fully_payed').checked = false;
+        el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+        el('contact').value = "";
+    }
+
+    async function printReceipt() {
+        const response = await fetch(
+            "http://localhost:8900/printRepairReceipt/",
+            {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    receipt_id: receipt,
+                    data: repairLines,
+                    total: amount,
+                    contact: el('contact').value,
+                    advanced: el('advanced').value,
+                    payment: el('fully_payed').checked === true ? 'Full' : (el('advanced').value !== "") ? 'None' : 'Partial'
+                })
+            }
+        );
+        // el('confirmation_modal').style.display = 'none';
     }
 
     function selectProduct() {
@@ -452,6 +479,7 @@
                 el('fully_payed').checked = rows[0].status == 0 ? false : true;
                 el('confirmation_modal').style.display = 'none';
                 el('date_created').innerHTML = moment(rows[0].date_received).format('YYYY-MM-DD');
+                el('contact').value = rows[0].contact;
             } else {
                 el('no_receipt').innerHTML = "No receipt found";
                 repairLines = [];
@@ -462,6 +490,7 @@
                 el('total_amount').innerHTML = 'Rs. 0';
                 el('fully_payed').checked = false;
                 el('date_created').innerHTML = moment().format('YYYY-MM-DD');
+                el('contact').value = "";
                 setTimeout(()=>{
                     el('no_receipt').innerHTML = "";
                 },5000);

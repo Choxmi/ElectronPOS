@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Cash</title>
+</head>
+
+<body>
+<div class="sales">
+    <div class="sales-header">
+        <div class="title">Cash</div>
+        <div class="end"></div>
+    </div>
+    <div class="sale-container">
+        <div class="sales-left">
+            <div class="item-container expense-override">
+                <div class="table-search">
+                    <input type="text" id="inventory_searchbox"/>
+                    <button onclick="refreshTable()"><i class="material-icons">search</i></button>
+                    <div class="radio-container">
+                        <div class="radio-item">
+                            <input type="radio" id="radio_note" value="note" name="search_by" checked/>
+                            <label for="radio_note">&nbsp;By Note</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="radio_date" value="date" name="search_by"/>
+                            <label for="radio_date">&nbsp;By Date</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="confirmation_modal" class="confirmation_modal"></div>
+                <table>
+                    <thead>
+                        <th>DATE</th>
+                        <th>NOTE</th>
+                        <th>TYPE</th>
+                        <th>AMOUNT (Rs.)</th>
+                    </thead>
+                    <tbody id="expense_body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="sales-mid">
+            <br/>
+            <br/>
+            <br/>
+            <br/>
+            <div class="radio-container" style="display: flex;">
+                <div class="radio-item" style="display: flex; width: 50%;align-items: center;">
+                    <input type="radio" id="radio_spend" value="spend" name="transaction_type" checked style="width: auto;"/>
+                    <label for="radio_spend" style="font-size: 15px;">&nbsp;Spend</label>
+                </div>
+                <div class="radio-item" style="display: flex; width: 50%;align-items: center;">
+                    <input type="radio" id="radio_receive" value="receive" name="transaction_type" style="width: auto;"/>
+                    <label for="radio_receive" style="font-size: 15px;">&nbsp;Receive</label>
+                </div>
+            </div>
+            <div class="field">
+                <label>Note</label>
+                <input type="text" placeholder="Note" value="" id="note" />
+            </div>
+            <div class="field">
+                <label>Amount</label>
+                <input type="number" placeholder="Amount" value="" id="amount" />
+            </div>
+            <br/><br/>
+            <div class="actions">
+                <button class="btn" id="action-add">ADD</button>
+                <!-- <button class="btn" id="action-delete">DELETE</button> -->
+            </div>
+        </div>
+        <div class="sales-right">
+            <div class="icon-container">
+                <div class="item" onclick="navigate(0)">
+                    <div class="empty">
+                        <i class="material-icons">widgets</i>
+                        STOCK
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(1)">
+                    <div class="empty">
+                        <i class="material-icons">point_of_sale</i>
+                        SALES
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(2)">
+                    <div class="empty">
+                        <i class="material-icons">construction</i>
+                        REPAIR
+                    </div>
+                </div>
+                <div class="item" onclick="navigate(3)">
+                    <div class="selected">
+                        <i class="material-icons">attach_money</i>
+                        CASH
+                    </div>
+                    <div class="indicate"></div>
+                </div>
+                <div class="item" onclick="navigate(4)">
+                    <div class="empty">
+                        <i class="material-icons">analytics</i>
+                        SUMMARY
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    var mysql = require('mysql');
+    var moment = require('moment');
+    var config = require("./db-config");
+    let filter = '';
+    let tblRows = [];
+
+    refreshTable();
+
+    function el(selector) {
+        return document.getElementById(selector);
+    }
+
+    el('action-add').addEventListener('click', function () {
+        if(el('amount').value === "" || el('note').value === "") {
+            alert("Note and Amount are required");
+        } else {
+            let transaction = confirm("Do you want to add this record?");
+            if(transaction === true) {
+                var connection = mysql.createConnection(config.db);
+
+                connection.connect(function (err) {
+                    if (err) {
+                        console.log(err.code);
+                        console.log(err.fatal);
+                    }
+                });
+                // Spend - 0, Receive - 1
+                $query = `INSERT INTO pos_cashflow(type,note,amount,created) VALUES(${el('radio_spend').checked ? 0 : 1},'${el('note').value}',${el('amount').value},'${moment().format('YYYY-MM-DD')}')`;
+
+                connection.query($query, function (err, rows, fields) {
+                    if (err) {
+                        console.log("An error ocurred performing the query.");
+                        console.log(err);
+                        return;
+                    }
+
+                    el('note').value = "";
+                    el('amount').value = "";
+                    el('radio_spend').checked = true;
+
+                    refreshTable();
+                });
+            } else {
+                console.log("Transaction false");
+            }
+        }
+    }, false);
+
+    function refreshTable() {
+        let tbl = el('expense_body');
+        var connection = mysql.createConnection(config.db);
+
+        connection.connect(function (err) {
+            if (err) {
+                console.log(err.code);
+                console.log(err.fatal);
+            }
+        });
+        
+        $query = `SELECT * FROM pos_cashflow`;
+
+        connection.query($query, function (err, rows, fields) {
+            if (err) {
+                console.log("An error ocurred performing the query.");
+                console.log(err);
+                return;
+            }
+            let _rows = ``;
+            let str = el('inventory_searchbox').value;
+            for(let i = 0; i < rows.length; i++) {
+                console.log("Refresh Info",str,el('radio_note').value,el('radio_date').value);
+                if(str === null || str === '') {
+                    _rows += `
+                        <tr>
+                            <td>${moment(rows[i].created).format('YYYY-MM-DD')}</td>
+                            <td>${rows[i].note}</td>
+                            <td class="${rows[i].type === 1 ? 'green' : 'red'}">${rows[i].type === 1 ? "Receive" : "Spend"}</td>
+                            <td>${rows[i].amount}</td>
+                        </tr>
+                    `;
+                } else {
+                    console.log("NOTE",el('radio_note').value,rows[i].note,str);
+                    if(el('radio_note').value === 'note' && (rows[i].note.toLowerCase()).includes(str.toLowerCase())) {
+                        _rows += `
+                            <tr>
+                                <td>${moment(rows[i].created).format('YYYY-MM-DD')}</td>
+                                <td>${rows[i].note}</td>
+                                <td class="${rows[i].type === 1 ? 'green' : 'red'}">${rows[i].type === 1 ? "Receive" : "Spend"}</td>
+                                <td>${rows[i].amount}</td>
+                            </tr>
+                        `;
+                    }
+
+                    if(el('radio_date').value === 'date' && moment(rows[i].created).format('YYYY-MM-DD') === str) {
+                        _rows += `
+                            <tr>
+                                <td>${moment(rows[i].created).format('YYYY-MM-DD')}</td>
+                                <td>${rows[i].note}</td>
+                                <td class="${rows[i].type === 1 ? 'green' : 'red'}">${rows[i].type === 1 ? "Receive" : "Spend"}</td>
+                                <td>${rows[i].amount}</td>
+                            </tr>
+                        `;
+                    }
+                }
+            }
+            tbl.innerHTML = _rows;
+        });
+    }
+    
+    function navigate(pos) {
+        switch(pos) {
+            case 0:
+                window.location.href = "inventory.html"
+                break;
+            case 1:
+                window.location.href = "sales.html"
+                break;
+            case 2:
+                window.location.href = "repair.html";
+                break;
+            case 3:
+                window.location.href = "expenses.html";
+                break;
+            case 4:
+                window.location.href = "reports.html";
+                break;
+            default:
+                break;
+        }
+    }
+</script>
+</html>

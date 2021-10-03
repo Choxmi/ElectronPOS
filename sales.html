@@ -167,6 +167,7 @@
     var payments = 0;
     var balance = 0;
     var due = 0;
+    let receipt_id = null;
 
     let existing = false;
 
@@ -242,8 +243,12 @@
                 '<div class="quick-topic">Unit Price</div>'+
                 '<div class="quick-value">'+rows[0].unit_price+'</div>'+
                 '</div>';
-                var _img = fs.readFileSync(rows[0].img).toString('base64');
-                quickview+='<img class="quick-img" src="data:image/png;base64,' + _img + '" />';
+                try{
+                    var _img = fs.readFileSync(rows[0].img).toString('base64');
+                    quickview+='<img class="quick-img" src="data:image/png;base64,' + _img + '" />';
+                } catch(e) {
+                    console.log("No image. Dismissed");
+                }
                 selected_item = rows[0];
                 el('quantity').focus();
             }
@@ -305,7 +310,7 @@
                 return;
             }
             let seq = rows[0].total + 1;
-            let receipt_id = "X"+resDate.getFullYear()+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+resDate.getDate()+seq;
+            receipt_id = "P"+resDate.getFullYear()+((resDate.getMonth()+1 > 9 ? resDate.getMonth()+1 : "0"+(resDate.getMonth()+1)))+resDate.getDate()+seq;
             $query1 = "INSERT INTO pos_sales(receipt_id,sales_lines,net_amount,discount,timestamp,date) VALUES('"+receipt_id+"','"+JSON.stringify(current_sale)+"',"+net_total+","+(discounts !== null || discounts !== undefined ? 0 : discounts)+","+resDate.getTime()+",'"+dateStr+"')";
             console.log("QUERY 1",$query1);
             connection.query($query1, function(error, rs){
@@ -413,14 +418,19 @@
 
     async function printReceipt() {
         const response = await fetch(
-            "http://localhost:8900/",
+            "http://localhost:8900/printSalesReceipt/",
             {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    data: "TEST DATA\n\n\n"
+                    receipt_id: receipt_id,
+                    data: current_sale,
+                    total: net_total,
+                    paid: el('itm_payment').value,
+                    balance: (el('itm_payment').value - net_total),
+                    discount: (el('itm_discount').value === null || el('itm_discount').value === "")? "0" : el('itm_discount').value
                 })
             }
         );
@@ -550,22 +560,35 @@
     function resetFields() {
         current_sale = [];
         net_total = 0;
+        el("itm_discount").value = "";
+        el("itm_payment").value = "";
         refreshTable();
         el('sale_inputs').style.opacity = 1;
         el('confirmation_modal').style.display = "none";
+        existing = false;
     }
 
     function openModal(type) {
         el('confirmation_modal').style.display = "flex";
         // Save receipt 
         if(type === 1) {
-            el('confirmation_modal').innerHTML = `
-                <div class='modal-content'>
-                    <h1 class='modal-title'>Do you want to save this receipt?</h1>
-                    <div class='actions'><button class='btn' onclick="saveReceipt()">Yes</button>
-                    <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
-                </div>
-                `;
+            if(current_sale.length > 0 && !existing) {
+                el('confirmation_modal').innerHTML = `
+                    <div class='modal-content'>
+                        <h1 class='modal-title'>Do you want to save this receipt?</h1>
+                        <div class='actions'><button class='btn' onclick="saveReceipt()">Yes</button>
+                        <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; return false;})();return false;">Dismiss</button></div>
+                    </div>
+                    `;
+            } else {
+                el('confirmation_modal').innerHTML = `
+                    <div class='modal-content'>
+                        <h1 class='modal-title'>Do you want to print this receipt?</h1>
+                        <div class='actions'><button class='btn' onclick="printReceipt()">Yes</button>
+                        <button class='btn' onclick="(function(){el('confirmation_modal').style.display = 'none'; resetFields(); return false;})();return false;">Dismiss</button></div>
+                    </div>
+                    `;
+            }
         }
 
         if(type === 2) {

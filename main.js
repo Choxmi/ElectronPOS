@@ -8,13 +8,13 @@ let win
 
 function createWindow () {
     // Create the browser window.
-    win = new BrowserWindow({width: 800, height: 600, icon: path.join(__dirname, 'assets/icons/png/64x64.png')})
+    win = new BrowserWindow({width: 800, height: 600, icon: path.join(__dirname, 'assets/icons/png/64x64.png'), title: "Indira Communication", backgroundColor: '#202122', frame: false, fullscreenable: true, fullscreen: true})
 
     // and load the index.html of the app.
-    win.loadFile('inventory.html')
+    win.loadFile('login.html')
 
     // Open the DevTools.
-    win.webContents.openDevTools()
+    // win.webContents.openDevTools()
 
     // Emitted when the window is closed.
     win.on('closed', () => {

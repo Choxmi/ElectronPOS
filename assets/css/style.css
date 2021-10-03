@@ -1523,3 +1523,35 @@ tfoot td {
     font-size: 2em;
     margin-bottom: 20px;
 }
+
+.login-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #202122;
+}
+
+.login-container .sales-mid {
+    flex: none;
+}
+
+.login-container .sales-mid .field label {
+    color: white;
+}
+
+.login-container .sales-mid label {
+    color: red;
+}
+
+.login-container h1 {
+    font-size: 5em;
+    color: white;
+}
+
+.login-container h2 {
+    font-size: 3em;
+    color: #186FCE;
+}

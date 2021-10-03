@@ -60,7 +60,7 @@
                 <div class="right">
                     <div class="flex-wrapper">
                         <div class="btn-container">
-                            <button>
+                            <button onclick="printBarcode()">
                                 <i class="material-icons">print</i>
                             </button>
                             <h1>PRINT BARCODE</h1>
@@ -171,6 +171,7 @@
     var mysql = require('mysql');
     var moment = require('moment');
     var JsBarcode = require('jsbarcode');
+    const { jsPDF } = require("jspdf");
 
     var remote = require('electron').remote;
     var fs = remote.require('fs');
@@ -353,7 +354,7 @@
             }
             fillTable(null);
             reset();
-            displayNotification('Done!', 'Asset Deleted');
+            displayNotification('Done!', 'Asset Updated');
         });
     }
 
@@ -420,6 +421,8 @@
                 return;
             }
             addAsset(rows[0].cur_id === null ? 1 : parseInt(rows[0].cur_id)+1);
+            displayNotification('Done!', 'Item added');
+            reset();
         });
 
         connection.end(function () {
@@ -728,6 +731,26 @@
             toggleAlert(0);
         });
         alert(catId+"_"+el('modal_sub_cat_name').value);
+    }
+
+    async function printBarcode() {
+        const img = document.querySelector('img#canvas');
+        const doc = new jsPDF('l','in',[1.02,1.46]);
+        console.log("IMG",img.src);
+        doc.addImage(img.src, 'JPEG', 0, 0, 1.46, 1.02);
+        doc.save(`./barcodes/${el('barcode').innerHTML}.pdf`);
+        let isPrint = confirm(`Barcode ${el('barcode').innerHTML} saved. Do you want to print?`);
+        if(isPrint) {
+            const response = await fetch(
+            `http://localhost:8900/printBarcode/${el('barcode').innerHTML}`,
+            {
+                method: 'GET',
+                headers: {
+                'Content-Type': 'application/json'
+                }
+            }
+        );
+        }
     }
 
     function navigate(pos){

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>Login</title>
+</head>
+
+<body>
+    <div class="login-container">
+        <h1>Indira phone center</h1>
+        <br/>
+        <h2>Login</h2>
+        <br/>
+        <div class="sales-mid">
+            <div class="field">
+                <label>Username</label>
+                <input type="text" placeholder="Username" value="" id="username" />
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" placeholder="Password" value="" id="password" />
+            </div>
+            <br/>
+            <br/>
+            <div class="actions">
+                <button class="btn" id="action-login">LOGIN</button>
+            </div>
+            <label class="error" id="error"></label>
+        </div>
+    </div>
+</body>
+<script>
+    function el(selector) {
+        return document.getElementById(selector);
+    }
+
+    el('action-login').addEventListener('click', function () {
+        el('error').innerHTML = "";
+        if(el('username').value === "" || el('password').value === "") {
+            el('error').innerHTML = "Username and password required";
+        } else {
+            el('error').innerHTML = "Loading";
+            try {
+                var macaddress = require('macaddress');
+                macaddress.one('Ethernet', function (err, mac) {
+                    alert(mac);
+                    var SHA1 = require("crypto-js/sha1");
+                    var mysql = require('mysql');
+                    var config = require("./db-config");
+                    var connection = mysql.createConnection(config.db);
+                    alert(SHA1(el('password').value).toString());
+                    connection.connect(function (err) {
+                        if (err) {
+                            console.log(err.code);
+                            console.log(err.fatal);
+                            el('error').innerHTML = "Internal error occured";
+                        }
+                    });
+
+                    $query = `SELECT 1 FROM pos_users WHERE username = '${el('username').value}' AND passcode = '${SHA1(el('password').value).toString()}' AND secret = '${SHA1(mac).toString()}'`;
+                    connection.query($query, function (err, rows, fields) {
+                        if (err) {
+                            console.log("An error ocurred performing the query.");
+                            console.log(err);
+                            el('error').innerHTML = "Internal error occured";
+                            return;
+                        }
+                        console.log("Executed",rows);
+                        if(rows.length > 0) {
+                            window.location.href = "inventory.html"
+                        } else {
+                            el('error').innerHTML = "Invalid credentials";
+                        }
+                    });
+                });
+            } catch(e) {
+                alert("Internal Error");
+            }
+        }
+    });
+</script>
+
+</html>
